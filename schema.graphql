@@ -1,0 +1,8 @@
+type MarketInitiated @entity(immutable: true) {
+  id: Bytes!
+  marketId: BigInt! # uint256
+  recipient: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
