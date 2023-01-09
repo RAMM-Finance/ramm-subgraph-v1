@@ -2,6 +2,9 @@
   "mumbai": {
     "Controller": {
       "address": "0x51b0dCcB6fE73dE1B23e6Ca702e7785Fdb629942"
+    },
+    "MarketManager": {
+      "address": "0xBFe4De99aa1A566F5eb827D85D4d155c997c7267"
     }
   }
 }

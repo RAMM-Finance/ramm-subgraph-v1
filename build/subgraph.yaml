@@ -1,12 +1,12 @@
 specVersion: 0.0.5
 schema:
-  file: ./schema.graphql
+  file: schema.graphql
 dataSources:
   - kind: ethereum
     name: Controller
     network: mumbai
     source:
-      address: '0x36c7feB605891E643258B7fFd5c28a41b83D71Aa'
+      address: "0x36c7feB605891E643258B7fFd5c28a41b83D71Aa"
       abi: Controller
       startBlock: 30717554
     mapping:
@@ -26,27 +26,29 @@ dataSources:
         - PoolCollateral
       abis:
         - name: Controller
-          file: ./abis/Controller.json
+          file: Controller/abis/Controller.json
         - name: MarketManager
-          file: ./abis/MarketManager.json
+          file: Controller/abis/MarketManager.json
         - name: Vault
-          file: ./abis/Vault.json
+          file: Controller/abis/Vault.json
         - name: PoolInstrument
-          file: ./abis/poolInstrument.json
+          file: Controller/abis/poolInstrument.json
         - name: CreditlineInstrument
-          file: ./abis/CreditLine.json
+          file: Controller/abis/CreditLine.json
         - name: Instrument
-          file: ./abis/Instrument.json
+          file: Controller/abis/Instrument.json
         - name: SyntheticZCBPool
-          file: ./abis/SyntheticZCBPool.json
+          file: Controller/abis/SyntheticZCBPool.json
         - name: ERC20
-          file: ./abis/ERC20.json
+          file: Controller/abis/ERC20.json
         - name: ERC721
-          file: ./abis/ERC721.json
+          file: Controller/abis/ERC721.json
       eventHandlers:
-        - event:  MarketInitiated(indexed uint256,indexed address,indexed address,address,address,address,(bytes32,bool,bool,uint256,uint256,uint256,uint256,uint256,uint256,string,address,uint8,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256)))
+        - event: MarketInitiated(indexed uint256,indexed address,indexed
+            address,address,address,address,(bytes32,bool,bool,uint256,uint256,uint256,uint256,uint256,uint256,string,address,uint8,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256)))
           handler: handleMarketInitiated
-        - event: VaultCreated(indexed address,uint256,address,bool,uint256,uint256,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))
+        - event: VaultCreated(indexed
+            address,uint256,address,bool,uint256,uint256,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))
           handler: handleVaultCreated
         - event: MarketApproved(indexed uint256,(uint256,uint256,uint256))
           handler: handleMarketApproved
@@ -54,12 +56,12 @@ dataSources:
           handler: handleMarketDenied
         - event: MarketResolved(indexed uint256,bool,uint256,uint256,bool)
           handler: handleMarketResolved
-      file: ./src/mappings/controller.ts
+      file: Controller/Controller.wasm
   - kind: ethereum
     name: ReputationManager
     network: mumbai
     source:
-      address: '0x2558d5A7475891cA513944328052073f841CaB05'
+      address: "0x2558d5A7475891cA513944328052073f841CaB05"
       abi: ReputationManager
       startBlock: 30717575
     mapping:
@@ -70,16 +72,16 @@ dataSources:
         - Trader
       abis:
         - name: ReputationManager
-          file: ./abis/ReputationManager.json
+          file: ReputationManager/abis/ReputationManager.json
       eventHandlers:
         - event: ScoreUpdated(address,uint256)
           handler: handleScoreUpdated
-      file: ./src/mappings/reputationManager.ts
+      file: ReputationManager/ReputationManager.wasm
   - kind: ethereum
     name: MarketManager
     network: mumbai
     source:
-      address: '0x18A7D487c5139ff4314Dc6907Dc3c7570E3f6890'
+      address: "0x18A7D487c5139ff4314Dc6907Dc3c7570E3f6890"
       abi: MarketManager
       startBlock: 30717564
     mapping:
@@ -101,23 +103,23 @@ dataSources:
         - ManagerMarketPair
       abis:
         - name: Controller
-          file: ./abis/Controller.json
+          file: MarketManager/abis/Controller.json
         - name: MarketManager
-          file: ./abis/MarketManager.json
+          file: MarketManager/abis/MarketManager.json
         - name: Vault
-          file: ./abis/Vault.json
+          file: MarketManager/abis/Vault.json
         - name: PoolInstrument
-          file: ./abis/poolInstrument.json
+          file: MarketManager/abis/poolInstrument.json
         - name: CreditlineInstrument
-          file: ./abis/CreditLine.json
+          file: MarketManager/abis/CreditLine.json
         - name: Instrument
-          file: ./abis/Instrument.json
+          file: MarketManager/abis/Instrument.json
         - name: SyntheticZCBPool
-          file: ./abis/SyntheticZCBPool.json
+          file: MarketManager/abis/SyntheticZCBPool.json
         - name: ERC20
-          file: ./abis/ERC20.json
+          file: MarketManager/abis/ERC20.json
         - name: ERC721
-          file: ./abis/ERC721.json
+          file: MarketManager/abis/ERC721.json
       eventHandlers:
         - event: DeactivatedMarket(indexed uint256,bool,bool,uint256)
           handler: handleDeactivatedMarket
@@ -125,11 +127,10 @@ dataSources:
           handler: handleMarketApproved
         - event: MarketCollateralUpdate(uint256,uint256)
           handler: handleMarketCollateralUpdate
-        # - event: MarketCreated(indexed uint256,address,address,address,string,bool)
-        #   handler: handleMarketCreated
         - event: MarketDenied(indexed uint256)
           handler: handleMarketDenied
-        - event: MarketParametersSet(indexed uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))
+        - event: MarketParametersSet(indexed
+            uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))
           handler: handleMarketParametersSet
         - event: MarketPhaseSet(indexed uint256,(bool,bool,bool,bool,bool,uint256))
           handler: handleMarketPhaseSet
@@ -137,7 +138,7 @@ dataSources:
           handler: handleTraderCollateralUpdate
         - event: RedeemDenied(uint256,address,bool)
           handler: handleRedeemDenied
-      file: ./src/mappings/marketManager.ts
+      file: MarketManager/MarketManager.wasm
 templates:
   - name: Vault
     kind: ethereum/contract
@@ -155,10 +156,8 @@ templates:
         - CreditlineInstrument
       abis:
         - name: Vault
-          file: ./abis/Vault.json
+          file: Vault/abis/Vault.json
       eventHandlers:
-        # - event: InstrumentResolve(indexed uint256,uint256,bool,uint256,uint256,bool)
-        #   handler: handleInstrumentResolve
         - event: InstrumentTrusted(indexed uint256,indexed address,uint256,uint256,uint256)
           handler: handleInstrumentTrusted
         - event: InstrumentWithdrawal(indexed uint256,indexed address,uint256)
@@ -169,15 +168,11 @@ templates:
           handler: handleInstrumentHarvest
         - event: InstrumentRemoved(indexed uint256,indexed address)
           handler: handleInstrumentRemoved
-        # - event: MaturityDateSet(indexed uint256,indexed address,uint256)
-        #   handler: handleMaturityDateSet
-        # - event: ProposalAdded((bytes32,bool,bool,uint256,uint256,uint256,uint256,uint256,uint256,string,address,uint8,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256)))
-        #   handler: handleProposalAdded
         - event: Deposit(indexed address,indexed address,uint256,uint256)
           handler: handleDeposit
         - event: Withdraw(indexed address,indexed address,indexed address,uint256,uint256)
           handler: handleWithdraw
-      file: ./src/mappings/vault.ts
+      file: templates/Vault/Vault.wasm
   - name: PoolInstrument
     kind: ethereum/contract
     network: mumbai
@@ -194,7 +189,7 @@ templates:
         - CreditlineInstrument
       abis:
         - name: PoolInstrument
-          file: ./abis/poolInstrument.json
+          file: PoolInstrument/abis/poolInstrument.json
       eventHandlers:
         - event: AddCollateral(indexed address,address,uint256,uint256)
           handler: handleAddCollateral
@@ -212,4 +207,4 @@ templates:
           handler: handleWithdraw
         - event: NewCollateralAdded(address,uint256,uint256,uint256,bool)
           handler: handleNewCollateralAdded
-      file: ./src/mappings/poolInstrument.ts
+      file: templates/PoolInstrument/PoolInstrument.wasm
