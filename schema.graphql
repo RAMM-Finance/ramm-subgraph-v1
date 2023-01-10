@@ -38,7 +38,7 @@ type Market @entity {
   atLoss: Boolean
 
   # market parameters
-  N: BigDecimal!
+  N: BigInt!
   sigma: BigDecimal!
   alpha: BigDecimal!
   omega: BigDecimal!
@@ -46,6 +46,7 @@ type Market @entity {
   r: BigDecimal!
   s: BigDecimal!
   steak: BigDecimal!
+  
 
   # redemption price set when market is resolved, may be null.
   redemptionPrice: BigDecimal!
@@ -142,7 +143,7 @@ type Vault @entity {
   name: String!
   symbol: String!
   decimals: BigInt!
-  underlying: String!
+  underlying: Token!
   # total balance of underlying
   totalAssets: BigDecimal!
   # total number of shares
@@ -155,7 +156,7 @@ type Vault @entity {
   rVault: BigDecimal!
   assetLimit: BigDecimal! 
   totalAssetLimit: BigDecimal!
-  N: BigDecimal!
+  N: BigInt!
   sigma: BigDecimal!
   alpha: BigDecimal!
   omega: BigDecimal!
@@ -168,13 +169,14 @@ type Vault @entity {
   generalInstruments: [GeneralInstrument!]! @derivedFrom (field: "vault")
   poolInstruments: [PoolInstrument!]! @derivedFrom (field: "vault")
   markets: [Market!]! @derivedFrom(field: "vault")
-
+  marketIds: [String!]!
 
   # optional for now?
   utilizationRate: BigDecimal
   totalEstimatedAPR: BigDecimal
   goalAPR: BigDecimal
   totalProtection: BigDecimal
+  exchangeRate: BigDecimal!
 }
 
 type PoolInstrument implements BaseInstrument @entity {
@@ -221,7 +223,8 @@ type PoolCollateral @entity {
   pool: PoolInstrument!
   name: String!
   symbol: String!
-
+  tokenId: BigInt!
+  tokenAddress: String!
   borrowAmount: BigDecimal!
   maxAmount: BigDecimal!
   isERC20: Boolean!

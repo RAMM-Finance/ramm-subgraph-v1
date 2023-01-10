@@ -12,7 +12,7 @@ import { SyntheticZCBPool as BondPoolContract } from "../../generated/Controller
 
 import {convertToDecimal} from "../utils/index"
 import { BI_18, ZERO_BD, marketManagerContract, ZERO_BI, controllerContract} from "../utils/constants"
-import { Manager, ManagerMarketPair, Market, BondPool, Token } from "../../generated/schema"
+import { Manager, ManagerMarketPair, Market, BondPool, Token, Vault, CreditlineInstrument, PoolInstrument, GeneralInstrument } from "../../generated/schema"
 import { BigInt, BigDecimal, Address, store } from '@graphprotocol/graph-ts'
 import { Vault as VaultTemplate} from "../../generated/templates"
 import { MarketApproved, MarketDenied } from "../../generated/Controller/Controller";
@@ -39,7 +39,52 @@ export function handleMarketApproved(event: MarketApproved):void {
 
 export function handleMarketCollateralUpdate(event: MarketCollateralUpdate): void {
     let market = Market.load(event.params.marketId.toString())
+    
     if (market) {
+        let vault = Vault.load(market.vault)
+        if (vault) {
+            // not very efficient...
+            let _markets = vault.marketIds
+            let totalProtection = ZERO_BD
+            let totalEstimatedAPR = ZERO_BD
+            if (_markets) {
+                for (let i = 0; i < _markets.length; i++) {
+                    let _market = Market.load(_markets[i])
+                    
+                    if (_market)  {
+                        totalProtection = totalProtection.plus(_market.totalCollateral)
+                        if (_market.instrumentType === "CREDITLINE") {
+                            let instrumentId = _market.creditlineInstrument
+                            if (instrumentId) {
+                                let instrument = CreditlineInstrument.load(instrumentId)
+                                if (instrument) {
+                                    vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
+                                }
+                            }
+                        } else if (_market.instrumentType === "POOL") {
+                            let instrumentId = _market.poolInstrument
+                            if (instrumentId) {
+                                let instrument = PoolInstrument.load(instrumentId)
+                                if (instrument) {
+                                    vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
+                                }
+                            }
+                        } else if (_market.instrumentType === "GENERAL") {
+                            let instrumentId = _market.poolInstrument
+                            if (instrumentId) {
+                                let instrument = GeneralInstrument.load(instrumentId)
+                                if (instrument) {
+                                    vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            vault.totalProtection = totalProtection
+            vault.totalEstimatedAPR = totalEstimatedAPR
+            vault.save()
+        }
         market.totalCollateral = convertToDecimal(event.params.totalCollateral, BI_18)
         market.save()
     }
@@ -64,7 +109,7 @@ export function handleMarketParametersSet(event: MarketParametersSet): void {
     let market = Market.load(event.params.marketId.toString())
     if (market) {
         let params = event.params.params
-        market.N = convertToDecimal(params.N, BI_18)
+        market.N = params.N
         market.sigma = convertToDecimal(params.sigma, BI_18)
         market.alpha = convertToDecimal(params.alpha, BI_18)
         market.omega = convertToDecimal(params.omega, BI_18)

@@ -6,11 +6,11 @@ import { Instrument as GeneralInstrumentContract } from "../../generated/Control
 import { PoolInstrument as PoolInstrumentContract } from "../../generated/Controller/PoolInstrument"
 import { ERC20 as ERC20Contract } from "../../generated/Controller/ERC20"
 import { ERC721 as ERC721Contract } from "../../generated/Controller/ERC721"
-import { Vault as VaultContract } from "../../generated/Controller/Vault"
+import { InstrumentDeposit, Vault as VaultContract } from "../../generated/Controller/Vault"
 
 
 import { convertToDecimal } from "../utils/index"
-import { BI_18, ZERO_BD, marketManagerContract, ZERO_BI, controllerContract, ADDRESS_ZERO, SECONDS_PER_YEAR } from "../utils/constants"
+import { BI_18, ZERO_BD, marketManagerContract, ZERO_BI, controllerContract, ADDRESS_ZERO, SECONDS_PER_YEAR, ONE_BD } from "../utils/constants"
 import { GeneralInstrument, BondPool, Market, Token, Vault, MarketManager, CreditlineInstrument, PoolInstrument, PoolCollateral } from "../../generated/schema"
 import { BigInt, BigDecimal, Address } from '@graphprotocol/graph-ts'
 import { Vault as VaultTemplate } from "../../generated/templates"
@@ -124,6 +124,7 @@ export function handleMarketInitiated(event: MarketInitiatedEvent): void {
 
   if (vault && vault.underlying) {
     vault.instrumentCount = vault.instrumentCount.plus(BigInt.fromI32(1))
+    vault.marketIds = vault.marketIds.concat([event.params.marketId.toString()])
     vault.save()
 
     // get tokens
@@ -170,6 +171,7 @@ export function handleMarketInitiated(event: MarketInitiatedEvent): void {
     market.onlyReputable = true
     market.marketCondition = false
     market.atLoss = false
+    market.resolved = false
 
     const phaseData = marketManagerContract.getPhaseData(event.params.marketId)
     market.baseBudget = convertToDecimal(phaseData.base_budget, BI_18)
@@ -178,7 +180,7 @@ export function handleMarketInitiated(event: MarketInitiatedEvent): void {
 
     const marketParameters = marketManagerContract.getParameters(event.params.marketId)
 
-    market.N = convertToDecimal(marketParameters.N, BI_18)
+    market.N = marketParameters.N
     market.sigma = convertToDecimal(marketParameters.sigma, BI_18)
     market.alpha = convertToDecimal(marketParameters.alpha, BI_18)
     market.omega = convertToDecimal(marketParameters.omega, BI_18)
@@ -205,8 +207,8 @@ export function handleMarketInitiated(event: MarketInitiatedEvent): void {
 
       // basic data
       instrument.market = market.id
-      instrument.vault = event.params.vault.toString()
-      instrument.utilizer = event.params.recipient.toString()
+      instrument.vault = event.params.vault.toHexString()
+      instrument.utilizer = event.params.recipient.toHexString()
       instrument.name = instrumentData.name.toString()
       instrument.exposurePercentage = ZERO_BD
       instrument.managerStake = ZERO_BD
@@ -216,6 +218,7 @@ export function handleMarketInitiated(event: MarketInitiatedEvent): void {
       instrument.principal = convertToDecimal(instrumentData.principal, BI_18)
       instrument.expectedYield = convertToDecimal(instrumentData.expectedYield, BI_18)
       instrument.duration = instrumentData.duration
+      instrument.description = instrumentData.description
 
       let collateralType = CreditlineContract.bind(instrumentData.instrument_address).try_collateral_type();
       if (!collateralType.reverted) {
@@ -241,8 +244,8 @@ export function handleMarketInitiated(event: MarketInitiatedEvent): void {
 
       // basic data
       instrument.market = market.id
-      instrument.vault = event.params.vault.toString()
-      instrument.utilizer = event.params.recipient.toString()
+      instrument.vault = event.params.vault.toHexString()
+      instrument.utilizer = event.params.recipient.toHexString()
       instrument.name = instrumentData.name.toString()
       instrument.exposurePercentage = ZERO_BD
       instrument.managerStake = ZERO_BD
@@ -252,10 +255,14 @@ export function handleMarketInitiated(event: MarketInitiatedEvent): void {
       instrument.principal = ZERO_BD
       instrument.expectedYield = ZERO_BD
       instrument.duration = ZERO_BI
+
+      const poolContract = PoolInstrumentContract.bind(Address.fromString(instrument.id))
+
       instrument.totalBorrowShares = ZERO_BD
       instrument.totalBorrowAssets = ZERO_BD
-      instrument.totalSupplyAssets = ZERO_BD
-      instrument.totalSupplyShares = ZERO_BD
+      instrument.totalSupplyAssets = convertToDecimal(poolContract.totalAssets(), BI_18);
+      instrument.totalSupplyShares = convertToDecimal(poolContract.totalSupply(), BI_18);
+      instrument.totalAvailableAssets = convertToDecimal(poolContract.totalAssetAvailable(), BI_18);
       instrument.borrowAPR = ZERO_BD
       instrument.description = instrumentData.description
 
@@ -263,6 +270,7 @@ export function handleMarketInitiated(event: MarketInitiatedEvent): void {
       instrument.initPrice = convertToDecimal(instrumentData.poolData.initPrice, BI_18)
       instrument.inceptionPrice = convertToDecimal(instrumentData.poolData.inceptionPrice, BI_18)
       instrument.leverageFactor = convertToDecimal(instrumentData.poolData.leverageFactor, BI_18)
+      instrument.promisedReturn = convertToDecimal(instrumentData.poolData.promisedReturn, BI_18)
       instrument.inceptionTime = event.block.timestamp
       instrument.managementFee = ZERO_BD
 
@@ -274,6 +282,9 @@ export function handleMarketInitiated(event: MarketInitiatedEvent): void {
         let collateralData = instrumentContract.collateralData(collaterals[i].tokenAddress, collaterals[i].tokenId)
         let _id = instrument.id.concat("-").concat(collaterals[i].tokenAddress.toHexString()).concat("-").concat(collaterals[i].tokenId.toString());
         let collateral = new PoolCollateral(_id);
+
+        collateral.tokenAddress = collaterals[i].tokenAddress.toHexString()
+        collateral.tokenId = collaterals[i].tokenId
         collateral.pool = instrument.id
         collateral.borrowAmount = convertToDecimal(collateralData.getMaxBorrowAmount(), BI_18)
         collateral.maxAmount = convertToDecimal(collateralData.getMaxAmount(), BI_18)
@@ -287,6 +298,7 @@ export function handleMarketInitiated(event: MarketInitiatedEvent): void {
           collateral.name = collateralContract.name()
           collateral.decimals = BigInt.fromI32(collateralContract.decimals())
           collateral.owner = ADDRESS_ZERO
+          
         } else {
           // create ERC721Contract from collateral address
           let collateralContract = ERC721Contract.bind(collaterals[i].tokenAddress)
@@ -310,8 +322,8 @@ export function handleMarketInitiated(event: MarketInitiatedEvent): void {
       let underlyingContract = ERC20Contract.bind(Address.fromString(vault.underlying))
 
       instrument.market = market.id
-      instrument.vault = event.params.vault.toString()
-      instrument.utilizer = event.params.recipient.toString()
+      instrument.vault = event.params.vault.toHexString()
+      instrument.utilizer = event.params.recipient.toHexString()
       instrument.name = instrumentData.name.toString()
       instrument.exposurePercentage = ZERO_BD
       instrument.managerStake = ZERO_BD
@@ -327,7 +339,6 @@ export function handleMarketInitiated(event: MarketInitiatedEvent): void {
     }
 
     // validator data
-    market.validators = []
     market.valCap = convertToDecimal(controllerContract.getValidatorCap(event.params.marketId), BI_18)
     market.initialStake = convertToDecimal(controllerContract.getInitialStake(event.params.marketId), BI_18)
     market.finalStake = ZERO_BD
@@ -357,7 +368,16 @@ export function handleVaultCreated(event: VaultCreatedEvent): void {
   // create vault entity + add vault datasource
   let vault = new Vault(event.params.vault.toHexString())
   vault.vaultId = event.params.vaultId
-  vault.underlying = event.params.underlying.toHexString()
+  let underlying = new Token(event.params.underlying.toHexString())
+  let underlyingContract =  ERC20Contract.bind(event.params.underlying)
+  
+  underlying.decimals = BigInt.fromI32(underlyingContract.decimals())
+  underlying.name = underlyingContract.name()
+  underlying.symbol = underlyingContract.symbol()
+  underlying.totalSupply = convertToDecimal(underlyingContract.totalSupply(), underlying.decimals)
+  underlying.save()
+  
+  vault.underlying = underlying.id
   vault.onlyVerified = event.params.onlyVerified
 
   vault.rVault = convertToDecimal(event.params.r, BI_18)
@@ -365,6 +385,8 @@ export function handleVaultCreated(event: VaultCreatedEvent): void {
   vault.assetLimit = convertToDecimal(event.params.assetLimit, BI_18)
   vault.totalInstrumentHoldings = ZERO_BD
 
+  vault.exchangeRate = ONE_BD
+  vault.marketIds = []
 
   // bind vault contract
   let vaultContract = VaultContract.bind(event.params.vault)
@@ -378,7 +400,7 @@ export function handleVaultCreated(event: VaultCreatedEvent): void {
 
   const defaultMarketParameters = event.params.defaultParams
 
-  vault.N = convertToDecimal(defaultMarketParameters.N, BI_18)
+  vault.N = defaultMarketParameters.N
   vault.sigma = convertToDecimal(defaultMarketParameters.sigma, BI_18)
   vault.alpha = convertToDecimal(defaultMarketParameters.alpha, BI_18)
   vault.omega = convertToDecimal(defaultMarketParameters.omega, BI_18)

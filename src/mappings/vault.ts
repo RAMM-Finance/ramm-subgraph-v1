@@ -24,7 +24,9 @@ export function handleInstrumentDeposit(event: InstrumentDepositEvent):void {
     let market = Market.load(event.params.marketId.toString())
     
     if (market && vault) {
+        vault.exchangeRate = convertToDecimal(vaultContract.previewDeposit(BigInt.fromI32(10).pow(18)), BI_18)
         vault.totalInstrumentHoldings = vault.totalInstrumentHoldings.plus(convertToDecimal(event.params.amount, BI_18))
+        vault.utilizationRate = convertToDecimal(vaultContract.utilizationRate(), BI_18)
         let underlying = ERC20Contract.bind(Address.fromString(vault.underlying))
 
         if (market.instrumentType === "Creditline") {
@@ -73,14 +75,56 @@ export function handleInstrumentDeposit(event: InstrumentDepositEvent):void {
         
         vault.save()
     }
+    
+    if (vault) {
+        let _markets = vault.marketIds
+        let totalEstimatedAPR = ZERO_BD
+        if (_markets) {
+            for (let i = 0; i < _markets.length; i++) {
+                let _market = Market.load(_markets[i])
+                
+                if (_market)  {
+                    if (_market.instrumentType === "CREDITLINE") {
+                        let instrumentId = _market.creditlineInstrument
+                        if (instrumentId) {
+                            let instrument = CreditlineInstrument.load(instrumentId)
+                            if (instrument) {
+                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
+                            }
+                        }
+                    } else if (_market.instrumentType === "POOL") {
+                        let instrumentId = _market.poolInstrument
+                        if (instrumentId) {
+                            let instrument = PoolInstrument.load(instrumentId)
+                            if (instrument) {
+                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
+                            }
+                        }
+                    } else if (_market.instrumentType === "GENERAL") {
+                        let instrumentId = _market.poolInstrument
+                        if (instrumentId) {
+                            let instrument = GeneralInstrument.load(instrumentId)
+                            if (instrument) {
+                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        vault.totalEstimatedAPR = totalEstimatedAPR
+        vault.save()
+    }
 }
 
 export function handleInstrumentWithdrawal(event: InstrumentWithdrawal): void {
     let vault = Vault.load(event.address.toHexString())
     let market = Market.load(event.params.marketId.toString())
-
+    
     if (market && vault) {
+        vault.exchangeRate = convertToDecimal(vaultContract.previewDeposit(BigInt.fromI32(10).pow(18)), BI_18)
         vault.totalInstrumentHoldings = vault.totalInstrumentHoldings.minus(convertToDecimal(event.params.amount, BI_18))
+        vault.utilizationRate = convertToDecimal(vaultContract.utilizationRate(), BI_18)
         let underlying = ERC20Contract.bind(Address.fromString(vault.underlying))
         
         if (market.instrumentType == "CREDITLINE") {
@@ -124,6 +168,46 @@ export function handleInstrumentWithdrawal(event: InstrumentWithdrawal): void {
             }
         }
         
+        vault.save()
+    }
+
+    if (vault) {
+        let _markets = vault.marketIds
+        let totalEstimatedAPR = ZERO_BD
+        if (_markets) {
+            for (let i = 0; i < _markets.length; i++) {
+                let _market = Market.load(_markets[i])
+                
+                if (_market)  {
+                    if (_market.instrumentType === "CREDITLINE") {
+                        let instrumentId = _market.creditlineInstrument
+                        if (instrumentId) {
+                            let instrument = CreditlineInstrument.load(instrumentId)
+                            if (instrument) {
+                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
+                            }
+                        }
+                    } else if (_market.instrumentType === "POOL") {
+                        let instrumentId = _market.poolInstrument
+                        if (instrumentId) {
+                            let instrument = PoolInstrument.load(instrumentId)
+                            if (instrument) {
+                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
+                            }
+                        }
+                    } else if (_market.instrumentType === "GENERAL") {
+                        let instrumentId = _market.poolInstrument
+                        if (instrumentId) {
+                            let instrument = GeneralInstrument.load(instrumentId)
+                            if (instrument) {
+                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        vault.totalEstimatedAPR = totalEstimatedAPR
         vault.save()
     }
 }
@@ -180,6 +264,46 @@ export function handleInstrumentTrusted(event: InstrumentTrusted): void {
             }
         }
     }
+
+    if (vault) {
+        let _markets = vault.markets
+        let totalEstimatedAPR = ZERO_BD
+        if (_markets) {
+            for (let i = 0; i < _markets.length; i++) {
+                let _market = Market.load(_markets[i])
+                
+                if (_market)  {
+                    if (_market.instrumentType === "CREDITLINE") {
+                        let instrumentId = _market.creditlineInstrument
+                        if (instrumentId) {
+                            let instrument = CreditlineInstrument.load(instrumentId)
+                            if (instrument) {
+                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
+                            }
+                        }
+                    } else if (_market.instrumentType === "POOL") {
+                        let instrumentId = _market.poolInstrument
+                        if (instrumentId) {
+                            let instrument = PoolInstrument.load(instrumentId)
+                            if (instrument) {
+                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
+                            }
+                        }
+                    } else if (_market.instrumentType === "GENERAL") {
+                        let instrumentId = _market.poolInstrument
+                        if (instrumentId) {
+                            let instrument = GeneralInstrument.load(instrumentId)
+                            if (instrument) {
+                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        vault.totalEstimatedAPR = totalEstimatedAPR
+        vault.save()
+    }
 }
 
 export function handleInstrumentHarvest(event: InstrumentHarvest): void {
@@ -230,6 +354,46 @@ export function handleInstrumentHarvest(event: InstrumentHarvest): void {
             }
             instrument.save()
         }
+    }
+
+    if (vault) {
+        let _markets = vault.marketIds
+        let totalEstimatedAPR = ZERO_BD
+        if (_markets) {
+            for (let i = 0; i < _markets.length; i++) {
+                let _market = Market.load(_markets[i])
+                
+                if (_market)  {
+                    if (_market.instrumentType === "CREDITLINE") {
+                        let instrumentId = _market.creditlineInstrument
+                        if (instrumentId) {
+                            let instrument = CreditlineInstrument.load(instrumentId)
+                            if (instrument) {
+                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
+                            }
+                        }
+                    } else if (_market.instrumentType === "POOL") {
+                        let instrumentId = _market.poolInstrument
+                        if (instrumentId) {
+                            let instrument = PoolInstrument.load(instrumentId)
+                            if (instrument) {
+                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
+                            }
+                        }
+                    } else if (_market.instrumentType === "GENERAL") {
+                        let instrumentId = _market.poolInstrument
+                        if (instrumentId) {
+                            let instrument = GeneralInstrument.load(instrumentId)
+                            if (instrument) {
+                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        vault.totalEstimatedAPR = totalEstimatedAPR
+        vault.save()
     }
 
 }

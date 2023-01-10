@@ -4,9 +4,13 @@ import { MarketInitiated } from "../generated/Controller/Controller"
 
 export function createMarketInitiatedEvent(
   marketId: BigInt,
-  recipient: Address
+  vault: Address,
+  recipient: Address,
+  pool: Address,
+  longZCB: Address,
+  shortZCB: Address
 ): MarketInitiated {
-  let marketInitiatedEvent = changetype<MarketInitiated>(newMockEvent())
+  let marketInitiatedEvent = (newMockEvent()) as MarketInitiated;
 
   marketInitiatedEvent.parameters = new Array()
 

@@ -234,13 +234,13 @@ export class Market extends Entity {
     this.set("atLoss", Value.fromBoolean(value));
   }
 
-  get N(): BigDecimal {
+  get N(): BigInt {
     let value = this.get("N");
-    return value!.toBigDecimal();
+    return value!.toBigInt();
   }
 
-  set N(value: BigDecimal) {
-    this.set("N", Value.fromBigDecimal(value));
+  set N(value: BigInt) {
+    this.set("N", Value.fromBigInt(value));
   }
 
   get sigma(): BigDecimal {
@@ -924,13 +924,13 @@ export class Vault extends Entity {
     this.set("totalAssetLimit", Value.fromBigDecimal(value));
   }
 
-  get N(): BigDecimal {
+  get N(): BigInt {
     let value = this.get("N");
-    return value!.toBigDecimal();
+    return value!.toBigInt();
   }
 
-  set N(value: BigDecimal) {
-    this.set("N", Value.fromBigDecimal(value));
+  set N(value: BigInt) {
+    this.set("N", Value.fromBigInt(value));
   }
 
   get sigma(): BigDecimal {
@@ -1041,6 +1041,15 @@ export class Vault extends Entity {
     this.set("markets", Value.fromStringArray(value));
   }
 
+  get marketIds(): Array<string> {
+    let value = this.get("marketIds");
+    return value!.toStringArray();
+  }
+
+  set marketIds(value: Array<string>) {
+    this.set("marketIds", Value.fromStringArray(value));
+  }
+
   get utilizationRate(): BigDecimal | null {
     let value = this.get("utilizationRate");
     if (!value || value.kind == ValueKind.NULL) {
@@ -1107,6 +1116,15 @@ export class Vault extends Entity {
     } else {
       this.set("totalProtection", Value.fromBigDecimal(<BigDecimal>value));
     }
+  }
+
+  get exchangeRate(): BigDecimal {
+    let value = this.get("exchangeRate");
+    return value!.toBigDecimal();
+  }
+
+  set exchangeRate(value: BigDecimal) {
+    this.set("exchangeRate", Value.fromBigDecimal(value));
   }
 }
 
@@ -1449,6 +1467,24 @@ export class PoolCollateral extends Entity {
 
   set symbol(value: string) {
     this.set("symbol", Value.fromString(value));
+  }
+
+  get tokenId(): BigInt {
+    let value = this.get("tokenId");
+    return value!.toBigInt();
+  }
+
+  set tokenId(value: BigInt) {
+    this.set("tokenId", Value.fromBigInt(value));
+  }
+
+  get tokenAddress(): string {
+    let value = this.get("tokenAddress");
+    return value!.toString();
+  }
+
+  set tokenAddress(value: string) {
+    this.set("tokenAddress", Value.fromString(value));
   }
 
   get borrowAmount(): BigDecimal {

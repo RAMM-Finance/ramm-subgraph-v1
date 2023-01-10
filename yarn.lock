@@ -218,9 +218,9 @@
     js-yaml "^4.1.0"
 
 "@graphprotocol/graph-cli@^0.37.1":
-  version "0.37.1"
-  resolved "https://registry.yarnpkg.com/@graphprotocol/graph-cli/-/graph-cli-0.37.1.tgz#7532aa7550154238e9469ee79d245db3f9373bc9"
-  integrity sha512-3liXj1O/4tDOOGRcgs9T9sbz1940APhfnNIusN7L3lWgfUb5G6OyfwDgf/mfma/veoFhvdEyccDwhY4CDLp4jQ==
+  version "0.37.2"
+  resolved "https://registry.yarnpkg.com/@graphprotocol/graph-cli/-/graph-cli-0.37.2.tgz#14d3b29e0e57ab2093b3cb42402c8ba5b9c4e557"
+  integrity sha512-RPHYCRCc62RsscwFpwFT+929lNNoB/FJW+PFaQ+zZaJuauj0x/+npcfIDCb4zAxlQskETqzT5WvWQ9gRK1l66g==
   dependencies:
     "@float-capital/float-subgraph-uncrashable" "^0.0.0-alpha.4"
     assemblyscript "0.19.23"
@@ -602,7 +602,7 @@ binaryen@101.0.0-nightly.20210723:
 
 binaryen@102.0.0-nightly.20211028:
   version "102.0.0-nightly.20211028"
-  resolved "https://registry.npmjs.org/binaryen/-/binaryen-102.0.0-nightly.20211028.tgz"
+  resolved "https://registry.yarnpkg.com/binaryen/-/binaryen-102.0.0-nightly.20211028.tgz#8f1efb0920afd34509e342e37f84313ec936afb2"
   integrity sha512-GCJBVB5exbxzzvyt8MGDv/MeUjs6gkXDvf4xOIItRBptYl0Tz5sm1o/uG95YK0L0VeG5ajDu3hRtkBP2kzqC5w==
 
 binaryen@110.0.0-nightly.20221105:
@@ -749,7 +749,7 @@ buffer-fill@^1.0.0:
 
 buffer-from@^1.0.0:
   version "1.1.2"
-  resolved "https://registry.npmjs.org/buffer-from/-/buffer-from-1.1.2.tgz"
+  resolved "https://registry.yarnpkg.com/buffer-from/-/buffer-from-1.1.2.tgz#2b146a6fd72e80b4f55d255f35ed59a3a9a41bd5"
   integrity sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==
 
 buffer-xor@^1.0.3:
@@ -1458,9 +1458,9 @@ glob@^7.1.3:
     once "^1.3.0"
     path-is-absolute "^1.0.0"
 
-"gluegun@https://github.com/edgeandnode/gluegun#v4.3.1-pin-colors-dep":
+"gluegun@git+https://github.com/edgeandnode/gluegun.git#v4.3.1-pin-colors-dep":
   version "4.3.1"
-  resolved "https://github.com/edgeandnode/gluegun#b34b9003d7bf556836da41b57ef36eb21570620a"
+  resolved "git+https://github.com/edgeandnode/gluegun.git#b34b9003d7bf556836da41b57ef36eb21570620a"
   dependencies:
     apisauce "^1.0.1"
     app-module-path "^2.2.0"
@@ -2204,7 +2204,7 @@ long@^4.0.0:
 
 long@^5.2.0:
   version "5.2.1"
-  resolved "https://registry.npmjs.org/long/-/long-5.2.1.tgz"
+  resolved "https://registry.yarnpkg.com/long/-/long-5.2.1.tgz#e27595d0083d103d2fa2c20c7699f8e0c92b897f"
   integrity sha512-GKSNGeNAtw8IryjjkhZxuKB3JzlcLTwjtiQCHKvqQet81I93kXslhDQruGI/QsddO83mcDToBVy7GqGS/zYf/A==
 
 looper@^3.0.0:
@@ -2240,9 +2240,9 @@ mafmt@^7.0.0:
   dependencies:
     multiaddr "^7.3.0"
 
-matchstick-as@0.5.0:
+matchstick-as@^0.5.0:
   version "0.5.0"
-  resolved "https://registry.npmjs.org/matchstick-as/-/matchstick-as-0.5.0.tgz"
+  resolved "https://registry.yarnpkg.com/matchstick-as/-/matchstick-as-0.5.0.tgz#cdafc1ef49d670b9cbe98e933bc2a5cb7c450aeb"
   integrity sha512-4K619YDH+so129qt4RB4JCNxaFwJJYLXPc7drpG+/mIj86Cfzg6FKs/bA91cnajmS1CLHdhHl9vt6Kd6Oqvfkg==
   dependencies:
     "@graphprotocol/graph-ts" "^0.27.0"
@@ -3072,7 +3072,7 @@ signed-varint@^2.0.1:
 
 source-map-support@^0.5.20:
   version "0.5.21"
-  resolved "https://registry.npmjs.org/source-map-support/-/source-map-support-0.5.21.tgz"
+  resolved "https://registry.yarnpkg.com/source-map-support/-/source-map-support-0.5.21.tgz#04fe7c7f9e1ed2d662233c28cb2b35b9f63f6e4f"
   integrity sha512-uBHU3L3czsIyYXKX88fdrGovxdSCoTGDRZ6SYXtSRxLZUzHg5P/66Ht6uoUlHu9EZod+inXhKo3qQgwXUT/y1w==
   dependencies:
     buffer-from "^1.0.0"
@@ -3080,7 +3080,7 @@ source-map-support@^0.5.20:
 
 source-map@^0.6.0:
   version "0.6.1"
-  resolved "https://registry.npmjs.org/source-map/-/source-map-0.6.1.tgz"
+  resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.6.1.tgz#74722af32e9614e9c287a8d0bbde48b5e2f1a263"
   integrity sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==
 
 split-ca@^1.0.0:
