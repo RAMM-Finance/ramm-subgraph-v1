@@ -1,4 +1,4 @@
-import { InstrumentDeposit as InstrumentDepositEvent, InstrumentHarvest, InstrumentRemoved, InstrumentTrusted, InstrumentWithdrawal as InstrumentWithdrawal} from "../../generated/Controller/Vault"
+import { InstrumentDeposit as InstrumentDepositEvent, InstrumentHarvest, InstrumentRemoved, InstrumentTrusted, InstrumentWithdrawal as InstrumentWithdrawal, Transfer as TransferVaultEvent} from "../../generated/Controller/Vault"
 
 import { SyntheticZCBPool as SyntheticZCBPoolContract } from "../../generated/Controller/SyntheticZCBPool"
 import { CreditlineInstrument as CreditlineContract} from "../../generated/Controller/CreditlineInstrument"
@@ -14,7 +14,7 @@ import {Address, BigInt} from "@graphprotocol/graph-ts"
 import {convertToDecimal} from "../utils/index"
 import { BI_18, ZERO_BD, marketManagerContract, ZERO_BI, controllerContract} from "../utils/constants"
 
-import { Vault, Market, CreditlineInstrument, PoolInstrument, GeneralInstrument} from "../../generated/schema"
+import { Vault, Market, CreditlineInstrument, PoolInstrument, GeneralInstrument, Token} from "../../generated/schema"
 
 let vaultContract = VaultContract.bind(dataSource.address())
 
@@ -77,42 +77,11 @@ export function handleInstrumentDeposit(event: InstrumentDepositEvent):void {
     }
     
     if (vault) {
-        let _markets = vault.marketIds
-        let totalEstimatedAPR = ZERO_BD
-        if (_markets) {
-            for (let i = 0; i < _markets.length; i++) {
-                let _market = Market.load(_markets[i])
-                
-                if (_market)  {
-                    if (_market.instrumentType === "CREDITLINE") {
-                        let instrumentId = _market.creditlineInstrument
-                        if (instrumentId) {
-                            let instrument = CreditlineInstrument.load(instrumentId)
-                            if (instrument) {
-                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
-                            }
-                        }
-                    } else if (_market.instrumentType === "POOL") {
-                        let instrumentId = _market.poolInstrument
-                        if (instrumentId) {
-                            let instrument = PoolInstrument.load(instrumentId)
-                            if (instrument) {
-                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
-                            }
-                        }
-                    } else if (_market.instrumentType === "GENERAL") {
-                        let instrumentId = _market.poolInstrument
-                        if (instrumentId) {
-                            let instrument = GeneralInstrument.load(instrumentId)
-                            if (instrument) {
-                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        vault.totalEstimatedAPR = totalEstimatedAPR
+        let result = controllerContract.getVaultSnapShot(vault.vaultId)
+        vault.totalEstimatedAPR = convertToDecimal(result.getTotalEstimatedAPR(), BI_18)
+        vault.goalAPR = convertToDecimal(result.getGoalAPR(), BI_18)
+        vault.totalProtection = convertToDecimal(result.getTotalProtection(), BI_18)
+        vault.exchangeRate = convertToDecimal(result.getExchangeRate(), BI_18)
         vault.save()
     }
 }
@@ -172,42 +141,11 @@ export function handleInstrumentWithdrawal(event: InstrumentWithdrawal): void {
     }
 
     if (vault) {
-        let _markets = vault.marketIds
-        let totalEstimatedAPR = ZERO_BD
-        if (_markets) {
-            for (let i = 0; i < _markets.length; i++) {
-                let _market = Market.load(_markets[i])
-                
-                if (_market)  {
-                    if (_market.instrumentType === "CREDITLINE") {
-                        let instrumentId = _market.creditlineInstrument
-                        if (instrumentId) {
-                            let instrument = CreditlineInstrument.load(instrumentId)
-                            if (instrument) {
-                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
-                            }
-                        }
-                    } else if (_market.instrumentType === "POOL") {
-                        let instrumentId = _market.poolInstrument
-                        if (instrumentId) {
-                            let instrument = PoolInstrument.load(instrumentId)
-                            if (instrument) {
-                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
-                            }
-                        }
-                    } else if (_market.instrumentType === "GENERAL") {
-                        let instrumentId = _market.poolInstrument
-                        if (instrumentId) {
-                            let instrument = GeneralInstrument.load(instrumentId)
-                            if (instrument) {
-                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        vault.totalEstimatedAPR = totalEstimatedAPR
+        let result = controllerContract.getVaultSnapShot(vault.vaultId)
+        vault.totalEstimatedAPR = convertToDecimal(result.getTotalEstimatedAPR(), BI_18)
+        vault.goalAPR = convertToDecimal(result.getGoalAPR(), BI_18)
+        vault.totalProtection = convertToDecimal(result.getTotalProtection(), BI_18)
+        vault.exchangeRate = convertToDecimal(result.getExchangeRate(), BI_18)
         vault.save()
     }
 }
@@ -266,42 +204,7 @@ export function handleInstrumentTrusted(event: InstrumentTrusted): void {
     }
 
     if (vault) {
-        let _markets = vault.markets
-        let totalEstimatedAPR = ZERO_BD
-        if (_markets) {
-            for (let i = 0; i < _markets.length; i++) {
-                let _market = Market.load(_markets[i])
-                
-                if (_market)  {
-                    if (_market.instrumentType === "CREDITLINE") {
-                        let instrumentId = _market.creditlineInstrument
-                        if (instrumentId) {
-                            let instrument = CreditlineInstrument.load(instrumentId)
-                            if (instrument) {
-                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
-                            }
-                        }
-                    } else if (_market.instrumentType === "POOL") {
-                        let instrumentId = _market.poolInstrument
-                        if (instrumentId) {
-                            let instrument = PoolInstrument.load(instrumentId)
-                            if (instrument) {
-                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
-                            }
-                        }
-                    } else if (_market.instrumentType === "GENERAL") {
-                        let instrumentId = _market.poolInstrument
-                        if (instrumentId) {
-                            let instrument = GeneralInstrument.load(instrumentId)
-                            if (instrument) {
-                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        vault.totalEstimatedAPR = totalEstimatedAPR
+        
         vault.save()
     }
 }
@@ -312,6 +215,12 @@ export function handleInstrumentHarvest(event: InstrumentHarvest): void {
     let vault = Vault.load(dataSource.address().toHexString())
     if (vault) {
         vault.totalInstrumentHoldings = convertToDecimal(event.params.totalInstrumentHoldings, BI_18)
+        let result = controllerContract.getVaultSnapShot(vault.vaultId)
+        vault.totalEstimatedAPR = convertToDecimal(result.getTotalEstimatedAPR(), BI_18)
+        vault.goalAPR = convertToDecimal(result.getGoalAPR(), BI_18)
+        vault.totalProtection = convertToDecimal(result.getTotalProtection(), BI_18)
+        vault.exchangeRate = convertToDecimal(result.getExchangeRate(), BI_18)
+        vault.save()
         vault.save()
     }
     if (instrumentData.instrument_type == 0) {
@@ -356,46 +265,6 @@ export function handleInstrumentHarvest(event: InstrumentHarvest): void {
         }
     }
 
-    if (vault) {
-        let _markets = vault.marketIds
-        let totalEstimatedAPR = ZERO_BD
-        if (_markets) {
-            for (let i = 0; i < _markets.length; i++) {
-                let _market = Market.load(_markets[i])
-                
-                if (_market)  {
-                    if (_market.instrumentType === "CREDITLINE") {
-                        let instrumentId = _market.creditlineInstrument
-                        if (instrumentId) {
-                            let instrument = CreditlineInstrument.load(instrumentId)
-                            if (instrument) {
-                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
-                            }
-                        }
-                    } else if (_market.instrumentType === "POOL") {
-                        let instrumentId = _market.poolInstrument
-                        if (instrumentId) {
-                            let instrument = PoolInstrument.load(instrumentId)
-                            if (instrument) {
-                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
-                            }
-                        }
-                    } else if (_market.instrumentType === "GENERAL") {
-                        let instrumentId = _market.poolInstrument
-                        if (instrumentId) {
-                            let instrument = GeneralInstrument.load(instrumentId)
-                            if (instrument) {
-                                vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        vault.totalEstimatedAPR = totalEstimatedAPR
-        vault.save()
-    }
-
 }
 
 export function handleInstrumentRemoved(event: InstrumentRemoved): void {
@@ -430,6 +299,27 @@ export function handleInstrumentRemoved(event: InstrumentRemoved): void {
         }
     }
     
+}
+
+export function handleTransfer(event: TransferVaultEvent): void {
+    
+    if (event.params.from === dataSource.address() || event.params.to === dataSource.address()) { 
+        let vault = Vault.load(dataSource.address().toHexString())
+        if (vault) {
+            vault.totalAssets = convertToDecimal(vaultContract.totalAssets(), BI_18);
+            vault.totalInstrumentHoldings = convertToDecimal(vaultContract.totalInstrumentHoldings(), BI_18);
+            vault.totalSupply = convertToDecimal(vaultContract.totalSupply(), BI_18);
+            vault.exchangeRate = convertToDecimal(vaultContract.previewDeposit(BigInt.fromI32(10).pow(18)), BI_18);
+            
+            let underlying = Token.load(vault.underlying)
+            let underlyingContract = ERC20Contract.bind(Address.fromString(vault.underlying))
+            if (underlying) {
+                underlying.totalSupply = convertToDecimal(underlyingContract.balanceOf(Address.fromString(vault.id)), BI_18)
+                underlying.save()
+            }
+            vault.save()
+        }
+    }
 }
 
 // export function handleMaturityDateSet(event: MaturityDateSet): void {

@@ -17,24 +17,9 @@
         "type": "address"
       },
       {
-        "internalType": "bool",
-        "name": "_onlyVerified",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_r",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_asset_limit",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_total_asset_limit",
-        "type": "uint256"
+        "internalType": "bytes",
+        "name": "_configData",
+        "type": "bytes"
       },
       {
         "components": [
@@ -858,6 +843,19 @@
     "name": "depositIntoInstrument",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "description",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -1973,6 +1971,19 @@
   {
     "inputs": [],
     "name": "totalFloat",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalInstrumentHoldings",
     "outputs": [
       {
         "internalType": "uint256",

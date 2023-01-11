@@ -234,6 +234,32 @@ export class MarketResolved__Params {
   }
 }
 
+export class RedeemTransfer extends ethereum.Event {
+  get params(): RedeemTransfer__Params {
+    return new RedeemTransfer__Params(this);
+  }
+}
+
+export class RedeemTransfer__Params {
+  _event: RedeemTransfer;
+
+  constructor(event: RedeemTransfer) {
+    this._event = event;
+  }
+
+  get marketId(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+
+  get amount(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+
+  get to(): Address {
+    return this._event.parameters[2].value.toAddress();
+  }
+}
+
 export class VaultCreated extends ethereum.Event {
   get params(): VaultCreated__Params {
     return new VaultCreated__Params(this);
@@ -369,6 +395,45 @@ export class Controller__getInstrumentSnapShotResult {
   }
 }
 
+export class Controller__getVaultSnapShotResult {
+  value0: BigInt;
+  value1: BigInt;
+  value2: BigInt;
+  value3: BigInt;
+
+  constructor(value0: BigInt, value1: BigInt, value2: BigInt, value3: BigInt) {
+    this.value0 = value0;
+    this.value1 = value1;
+    this.value2 = value2;
+    this.value3 = value3;
+  }
+
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set("value0", ethereum.Value.fromUnsignedBigInt(this.value0));
+    map.set("value1", ethereum.Value.fromUnsignedBigInt(this.value1));
+    map.set("value2", ethereum.Value.fromUnsignedBigInt(this.value2));
+    map.set("value3", ethereum.Value.fromUnsignedBigInt(this.value3));
+    return map;
+  }
+
+  getTotalProtection(): BigInt {
+    return this.value0;
+  }
+
+  getTotalEstimatedAPR(): BigInt {
+    return this.value1;
+  }
+
+  getGoalAPR(): BigInt {
+    return this.value2;
+  }
+
+  getExchangeRate(): BigInt {
+    return this.value3;
+  }
+}
+
 export class Controller__market_dataResult {
   value0: Address;
   value1: Address;
@@ -439,29 +504,6 @@ export class Controller extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toBoolean());
-  }
-
-  deduct_selling_fee(marketId: BigInt): BigInt {
-    let result = super.call(
-      "deduct_selling_fee",
-      "deduct_selling_fee(uint256):(uint256)",
-      [ethereum.Value.fromUnsignedBigInt(marketId)]
-    );
-
-    return result[0].toBigInt();
-  }
-
-  try_deduct_selling_fee(marketId: BigInt): ethereum.CallResult<BigInt> {
-    let result = super.tryCall(
-      "deduct_selling_fee",
-      "deduct_selling_fee(uint256):(uint256)",
-      [ethereum.Value.fromUnsignedBigInt(marketId)]
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
   deniedValidator(marketId: BigInt, validator: Address): BigInt {
@@ -937,6 +979,43 @@ export class Controller extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toAddress());
   }
 
+  getVaultSnapShot(vaultId: BigInt): Controller__getVaultSnapShotResult {
+    let result = super.call(
+      "getVaultSnapShot",
+      "getVaultSnapShot(uint256):(uint256,uint256,uint256,uint256)",
+      [ethereum.Value.fromUnsignedBigInt(vaultId)]
+    );
+
+    return new Controller__getVaultSnapShotResult(
+      result[0].toBigInt(),
+      result[1].toBigInt(),
+      result[2].toBigInt(),
+      result[3].toBigInt()
+    );
+  }
+
+  try_getVaultSnapShot(
+    vaultId: BigInt
+  ): ethereum.CallResult<Controller__getVaultSnapShotResult> {
+    let result = super.tryCall(
+      "getVaultSnapShot",
+      "getVaultSnapShot(uint256):(uint256,uint256,uint256,uint256)",
+      [ethereum.Value.fromUnsignedBigInt(vaultId)]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      new Controller__getVaultSnapShotResult(
+        value[0].toBigInt(),
+        value[1].toBigInt(),
+        value[2].toBigInt(),
+        value[3].toBigInt()
+      )
+    );
+  }
+
   getVaultfromId(vaultId: BigInt): Address {
     let result = super.call(
       "getVaultfromId",
@@ -1210,29 +1289,6 @@ export class Controller extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBoolean());
   }
 
-  riskTransferPenalty(): BigInt {
-    let result = super.call(
-      "riskTransferPenalty",
-      "riskTransferPenalty():(uint256)",
-      []
-    );
-
-    return result[0].toBigInt();
-  }
-
-  try_riskTransferPenalty(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall(
-      "riskTransferPenalty",
-      "riskTransferPenalty():(uint256)",
-      []
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
-  }
-
   validatorApprove(marketId: BigInt): BigInt {
     let result = super.call(
       "validatorApprove",
@@ -1486,6 +1542,10 @@ export class CreateVaultCall__Inputs {
       this._call.inputValues[5].value.toTuple()
     );
   }
+
+  get _description(): string {
+    return this._call.inputValues[6].value.toString();
+  }
 }
 
 export class CreateVaultCall__Outputs {
@@ -1667,52 +1727,6 @@ export class FulfillRandomWordsCall__Outputs {
 
   constructor(call: FulfillRandomWordsCall) {
     this._call = call;
-  }
-}
-
-export class GetInstrumentSnapShotCall extends ethereum.Call {
-  get inputs(): GetInstrumentSnapShotCall__Inputs {
-    return new GetInstrumentSnapShotCall__Inputs(this);
-  }
-
-  get outputs(): GetInstrumentSnapShotCall__Outputs {
-    return new GetInstrumentSnapShotCall__Outputs(this);
-  }
-}
-
-export class GetInstrumentSnapShotCall__Inputs {
-  _call: GetInstrumentSnapShotCall;
-
-  constructor(call: GetInstrumentSnapShotCall) {
-    this._call = call;
-  }
-
-  get marketId(): BigInt {
-    return this._call.inputValues[0].value.toBigInt();
-  }
-}
-
-export class GetInstrumentSnapShotCall__Outputs {
-  _call: GetInstrumentSnapShotCall;
-
-  constructor(call: GetInstrumentSnapShotCall) {
-    this._call = call;
-  }
-
-  get managerStake(): BigInt {
-    return this._call.outputValues[0].value.toBigInt();
-  }
-
-  get exposurePercentage(): BigInt {
-    return this._call.outputValues[1].value.toBigInt();
-  }
-
-  get seniorAPR(): BigInt {
-    return this._call.outputValues[2].value.toBigInt();
-  }
-
-  get approvalPrice(): BigInt {
-    return this._call.outputValues[3].value.toBigInt();
   }
 }
 

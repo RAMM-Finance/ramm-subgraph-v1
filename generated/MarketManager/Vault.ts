@@ -1149,6 +1149,21 @@ export class Vault extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
+  description(): string {
+    let result = super.call("description", "description():(string)", []);
+
+    return result[0].toString();
+  }
+
+  try_description(): ethereum.CallResult<string> {
+    let result = super.tryCall("description", "description():(string)", []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toString());
+  }
+
   enoughLiqudity(amounts: BigInt): boolean {
     let result = super.call(
       "enoughLiqudity",
@@ -1937,6 +1952,29 @@ export class Vault extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
+  totalInstrumentHoldings(): BigInt {
+    let result = super.call(
+      "totalInstrumentHoldings",
+      "totalInstrumentHoldings():(uint256)",
+      []
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_totalInstrumentHoldings(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      "totalInstrumentHoldings",
+      "totalInstrumentHoldings():(uint256)",
+      []
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
   totalSupply(): BigInt {
     let result = super.call("totalSupply", "totalSupply():(uint256)", []);
 
@@ -2152,25 +2190,13 @@ export class ConstructorCall__Inputs {
     return this._call.inputValues[2].value.toAddress();
   }
 
-  get _onlyVerified(): boolean {
-    return this._call.inputValues[3].value.toBoolean();
-  }
-
-  get _r(): BigInt {
-    return this._call.inputValues[4].value.toBigInt();
-  }
-
-  get _asset_limit(): BigInt {
-    return this._call.inputValues[5].value.toBigInt();
-  }
-
-  get _total_asset_limit(): BigInt {
-    return this._call.inputValues[6].value.toBigInt();
+  get _configData(): Bytes {
+    return this._call.inputValues[3].value.toBytes();
   }
 
   get _default_params(): ConstructorCall_default_paramsStruct {
     return changetype<ConstructorCall_default_paramsStruct>(
-      this._call.inputValues[7].value.toTuple()
+      this._call.inputValues[4].value.toTuple()
     );
   }
 }

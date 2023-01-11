@@ -1,4 +1,4 @@
-import { MarketResolved, MarketDenied as MarketDeniedEvent, MarketApproved as MarketApprovedEvent, MarketInitiated as MarketInitiatedEvent, VaultCreated as VaultCreatedEvent } from "../../generated/Controller/Controller"
+import { MarketResolved, MarketDenied as MarketDeniedEvent, MarketApproved as MarketApprovedEvent, MarketInitiated as MarketInitiatedEvent, VaultCreated as VaultCreatedEvent, RedeemTransfer } from "../../generated/Controller/Controller"
 
 import { SyntheticZCBPool as SyntheticZCBPoolContract } from "../../generated/Controller/SyntheticZCBPool"
 import { CreditlineInstrument as CreditlineContract } from "../../generated/Controller/CreditlineInstrument"
@@ -18,7 +18,7 @@ import { MarketReputationSet } from "../../generated/Controller/MarketManager"
 
 import { PoolInstrument as PoolInstrumentTemplate } from "../../generated/templates"
 
-export function handlMarketApproved(event: MarketApprovedEvent): void {
+export function handleMarketApproved(event: MarketApprovedEvent): void {
   let market = Market.load(event.params.marketId.toString())
 
   if (market && market.vault) {
@@ -41,16 +41,17 @@ export function handlMarketApproved(event: MarketApprovedEvent): void {
             instrument.seniorAPR = convertToDecimal(result.value.getSeniorAPR(), BI_18)
             instrument.managerStake = convertToDecimal(result.value.getManagerStake(), BI_18)
             instrument.approvalPrice = convertToDecimal(result.value.getApprovalPrice(), BI_18)
-          } else {
-            instrument.exposurePercentage = ZERO_BD
-            instrument.seniorAPR = ZERO_BD
-            instrument.managerStake = ZERO_BD
-            instrument.approvalPrice = ZERO_BD
           }
     
-          if (vault && vault.underlying) {
+          if (vault && vault.underlying && vault.vaultId) {
             instrument.underlyingBalance =
               convertToDecimal(ERC20Contract.bind(Address.fromString(vault.underlying)).balanceOf(Address.fromString(instrument.id)), BI_18)
+              let result = controllerContract.getVaultSnapShot(vault.vaultId)
+              vault.totalEstimatedAPR = convertToDecimal(result.getTotalEstimatedAPR(), BI_18)
+              vault.goalAPR = convertToDecimal(result.getGoalAPR(), BI_18)
+              vault.totalProtection = convertToDecimal(result.getTotalProtection(), BI_18)
+              vault.exchangeRate = convertToDecimal(result.getExchangeRate(), BI_18)
+              vault.save()
           }
     
           instrument.save()
@@ -67,11 +68,6 @@ export function handlMarketApproved(event: MarketApprovedEvent): void {
             instrument.seniorAPR = convertToDecimal(result.value.getSeniorAPR(), BI_18)
             instrument.managerStake = convertToDecimal(result.value.getManagerStake(), BI_18)
             instrument.approvalPrice = convertToDecimal(result.value.getApprovalPrice(), BI_18)
-          } else {
-            instrument.exposurePercentage = ZERO_BD
-            instrument.seniorAPR = ZERO_BD
-            instrument.managerStake = ZERO_BD
-            instrument.approvalPrice = ZERO_BD
           }
     
           if (vault && vault.underlying) {
@@ -94,11 +90,6 @@ export function handlMarketApproved(event: MarketApprovedEvent): void {
             instrument.seniorAPR = convertToDecimal(result.value.getSeniorAPR(), BI_18)
             instrument.managerStake = convertToDecimal(result.value.getManagerStake(), BI_18)
             instrument.approvalPrice = convertToDecimal(result.value.getApprovalPrice(), BI_18)
-          } else {
-            instrument.exposurePercentage = ZERO_BD
-            instrument.seniorAPR = ZERO_BD
-            instrument.managerStake = ZERO_BD
-            instrument.approvalPrice = ZERO_BD
           }
     
           if (vault && vault.underlying) {
@@ -458,4 +449,36 @@ export function handleMarketDenied(event: MarketDeniedEvent): void {
 //     market.save()
 //   }
 // }
+
+export function handleRedeemTransfer(event: RedeemTransfer): void {
+  let market = Market.load(event.params.marketId.toString())
+  if (market) {
+    let vault = Vault.load(market.vault)
+    if (vault) {
+      let result = controllerContract.getVaultSnapShot(vault.vaultId)
+      vault.totalEstimatedAPR = convertToDecimal(result.getTotalEstimatedAPR(), BI_18)
+      vault.goalAPR = convertToDecimal(result.getGoalAPR(), BI_18)
+      vault.totalProtection = convertToDecimal(result.getTotalProtection(), BI_18)
+      vault.exchangeRate = convertToDecimal(result.getExchangeRate(), BI_18)
+      vault.save()
+    }
+    let bondPool = BondPool.load(market.bondPool)
+
+    if (bondPool) {
+      let longZCB = Token.load(bondPool.longZCB)
+      let shortZCB = Token.load(bondPool.shortZCB)
+      if (longZCB && shortZCB) {
+        let longZCBContract = ERC20Contract.bind(Address.fromString(longZCB.id))
+        let shortZCBContract = ERC20Contract.bind(Address.fromString(shortZCB.id))
+
+        longZCB.totalSupply = convertToDecimal(longZCBContract.totalSupply(), longZCB.decimals)
+        shortZCB.totalSupply = convertToDecimal(shortZCBContract.totalSupply(), shortZCB.decimals)
+
+        longZCB.save()
+        shortZCB.save()
+      }
+      bondPool.save()
+    }
+  }
+}
 

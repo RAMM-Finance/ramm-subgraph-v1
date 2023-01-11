@@ -68,46 +68,11 @@ export function handleMarketCollateralUpdate(event: MarketCollateralUpdate): voi
     if (market) {
         let vault = Vault.load(market.vault)
         if (vault) {
-            // not very efficient...
-            let _markets = vault.marketIds
-            let totalProtection = ZERO_BD
-            let totalEstimatedAPR = ZERO_BD
-            if (_markets) {
-                for (let i = 0; i < _markets.length; i++) {
-                    let _market = Market.load(_markets[i])
-                    
-                    if (_market)  {
-                        totalProtection = totalProtection.plus(_market.totalCollateral)
-                        if (_market.instrumentType === "CREDITLINE") {
-                            let instrumentId = _market.creditlineInstrument
-                            if (instrumentId) {
-                                let instrument = CreditlineInstrument.load(instrumentId)
-                                if (instrument) {
-                                    vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
-                                }
-                            }
-                        } else if (_market.instrumentType === "POOL") {
-                            let instrumentId = _market.poolInstrument
-                            if (instrumentId) {
-                                let instrument = PoolInstrument.load(instrumentId)
-                                if (instrument) {
-                                    vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
-                                }
-                            }
-                        } else if (_market.instrumentType === "GENERAL") {
-                            let instrumentId = _market.poolInstrument
-                            if (instrumentId) {
-                                let instrument = GeneralInstrument.load(instrumentId)
-                                if (instrument) {
-                                    vault.totalEstimatedAPR = totalEstimatedAPR.plus(instrument.exposurePercentage.times(instrument.seniorAPR))
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            vault.totalProtection = totalProtection
-            vault.totalEstimatedAPR = totalEstimatedAPR
+            let result = controllerContract.getVaultSnapShot(vault.vaultId)
+            vault.totalEstimatedAPR = convertToDecimal(result.getTotalEstimatedAPR(), BI_18)
+            vault.goalAPR = convertToDecimal(result.getGoalAPR(), BI_18)
+            vault.totalProtection = convertToDecimal(result.getTotalProtection(), BI_18)
+            vault.exchangeRate = convertToDecimal(result.getExchangeRate(), BI_18)
             vault.save()
         }
         market.totalCollateral = convertToDecimal(event.params.totalCollateral, BI_18)
@@ -118,19 +83,12 @@ export function handleMarketCollateralUpdate(event: MarketCollateralUpdate): voi
             if (poolInstrumentId!== null) {
               let instrument = PoolInstrument.load(poolInstrumentId)
               if (instrument) {
-                let result = controllerContract.try_getInstrumentSnapShot(BigInt.fromString(instrument.market))
-                if (!result.reverted) {
-                  instrument.exposurePercentage = convertToDecimal(result.value.getExposurePercentage(), BI_18)
-                  instrument.seniorAPR = convertToDecimal(result.value.getSeniorAPR(), BI_18)
-                  instrument.managerStake = convertToDecimal(result.value.getManagerStake(), BI_18)
-                  instrument.approvalPrice = convertToDecimal(result.value.getApprovalPrice(), BI_18)
-                } else {
-                  instrument.exposurePercentage = ZERO_BD
-                  instrument.seniorAPR = ZERO_BD
-                  instrument.managerStake = ZERO_BD
-                  instrument.approvalPrice = ZERO_BD
-                }
-          
+                let result = controllerContract.getInstrumentSnapShot(BigInt.fromString(instrument.market))
+                instrument.exposurePercentage = convertToDecimal(result.getExposurePercentage(), BI_18)
+                instrument.seniorAPR = convertToDecimal(result.getSeniorAPR(), BI_18)
+                instrument.managerStake = convertToDecimal(result.getManagerStake(), BI_18)
+                instrument.approvalPrice = convertToDecimal(result.getApprovalPrice(), BI_18)
+
                 if (vault && vault.underlying) {
                   instrument.underlyingBalance =
                     convertToDecimal(ERC20Contract.bind(Address.fromString(vault.underlying)).balanceOf(Address.fromString(instrument.id)), BI_18)
@@ -144,19 +102,11 @@ export function handleMarketCollateralUpdate(event: MarketCollateralUpdate): voi
             if (creditlineInstrumentId !== null) {
               let instrument = CreditlineInstrument.load(creditlineInstrumentId)
               if (instrument) {
-                let result = controllerContract.try_getInstrumentSnapShot(BigInt.fromString(instrument.market))
-                if (!result.reverted) {
-                  instrument.exposurePercentage = convertToDecimal(result.value.getExposurePercentage(), BI_18)
-                  instrument.seniorAPR = convertToDecimal(result.value.getSeniorAPR(), BI_18)
-                  instrument.managerStake = convertToDecimal(result.value.getManagerStake(), BI_18)
-                  instrument.approvalPrice = convertToDecimal(result.value.getApprovalPrice(), BI_18)
-                } else {
-                  instrument.exposurePercentage = ZERO_BD
-                  instrument.seniorAPR = ZERO_BD
-                  instrument.managerStake = ZERO_BD
-                  instrument.approvalPrice = ZERO_BD
-                }
-          
+                let result = controllerContract.getInstrumentSnapShot(BigInt.fromString(instrument.market))
+                instrument.exposurePercentage = convertToDecimal(result.getExposurePercentage(), BI_18)
+                instrument.seniorAPR = convertToDecimal(result.getSeniorAPR(), BI_18)
+                instrument.managerStake = convertToDecimal(result.getManagerStake(), BI_18)
+                instrument.approvalPrice = convertToDecimal(result.getApprovalPrice(), BI_18)
                 instrument.save()
               }
             }
@@ -166,23 +116,34 @@ export function handleMarketCollateralUpdate(event: MarketCollateralUpdate): voi
               let instrument = GeneralInstrument.load(generalInstrumentId)
       
               if (instrument) {
-                let result = controllerContract.try_getInstrumentSnapShot(BigInt.fromString(instrument.market))
-                if (!result.reverted) {
-                  instrument.exposurePercentage = convertToDecimal(result.value.getExposurePercentage(), BI_18)
-                  instrument.seniorAPR = convertToDecimal(result.value.getSeniorAPR(), BI_18)
-                  instrument.managerStake = convertToDecimal(result.value.getManagerStake(), BI_18)
-                  instrument.approvalPrice = convertToDecimal(result.value.getApprovalPrice(), BI_18)
-                } else {
-                  instrument.exposurePercentage = ZERO_BD
-                  instrument.seniorAPR = ZERO_BD
-                  instrument.managerStake = ZERO_BD
-                  instrument.approvalPrice = ZERO_BD
-                }
-          
+                let result = controllerContract.getInstrumentSnapShot(BigInt.fromString(instrument.market))
+                instrument.exposurePercentage = convertToDecimal(result.getExposurePercentage(), BI_18)
+                instrument.seniorAPR = convertToDecimal(result.getSeniorAPR(), BI_18)
+                instrument.managerStake = convertToDecimal(result.getManagerStake(), BI_18)
+                instrument.approvalPrice = convertToDecimal(result.getApprovalPrice(), BI_18)
                 instrument.save()
               }
             }
           }
+
+        let bondPool = BondPool.load(market.bondPool)
+        if (bondPool) {
+            let shortZCBContract = ERC20Contract.bind(Address.fromString(bondPool.shortZCB))
+            let longZCBContract = ERC20Contract.bind(Address.fromString(bondPool.longZCB))
+
+            let longZCB = Token.load(bondPool.longZCB)
+            if (longZCB)  {
+                longZCB.totalSupply = convertToDecimal(longZCBContract.totalSupply(), BI_18)
+                longZCB.save()
+            }
+
+            let shortZCB = Token.load(bondPool.shortZCB)
+            if (shortZCB) {
+                shortZCB.totalSupply = convertToDecimal(shortZCBContract.totalSupply(), BI_18)
+                shortZCB.save()
+            }
+        }
+        
         market.save()
     }
 }
