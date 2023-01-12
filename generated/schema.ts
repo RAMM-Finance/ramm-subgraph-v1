@@ -11,56 +11,6 @@ import {
   BigDecimal
 } from "@graphprotocol/graph-ts";
 
-export class MarketManager extends Entity {
-  constructor(id: string) {
-    super();
-    this.set("id", Value.fromString(id));
-  }
-
-  save(): void {
-    let id = this.get("id");
-    assert(id != null, "Cannot save MarketManager entity without an ID");
-    if (id) {
-      assert(
-        id.kind == ValueKind.STRING,
-        `Entities of type MarketManager must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
-      );
-      store.set("MarketManager", id.toString(), this);
-    }
-  }
-
-  static load(id: string): MarketManager | null {
-    return changetype<MarketManager | null>(store.get("MarketManager", id));
-  }
-
-  get id(): string {
-    let value = this.get("id");
-    return value!.toString();
-  }
-
-  set id(value: string) {
-    this.set("id", Value.fromString(value));
-  }
-
-  get marketCount(): BigInt {
-    let value = this.get("marketCount");
-    return value!.toBigInt();
-  }
-
-  set marketCount(value: BigInt) {
-    this.set("marketCount", Value.fromBigInt(value));
-  }
-
-  get owner(): string {
-    let value = this.get("owner");
-    return value!.toString();
-  }
-
-  set owner(value: string) {
-    this.set("owner", Value.fromString(value));
-  }
-}
-
 export class Market extends Entity {
   constructor(id: string) {
     super();
@@ -1956,6 +1906,83 @@ export class BondPool extends Entity {
 
   set discountedReserved(value: BigDecimal) {
     this.set("discountedReserved", Value.fromBigDecimal(value));
+  }
+}
+
+export class ZCBToken extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id != null, "Cannot save ZCBToken entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type ZCBToken must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("ZCBToken", id.toString(), this);
+    }
+  }
+
+  static load(id: string): ZCBToken | null {
+    return changetype<ZCBToken | null>(store.get("ZCBToken", id));
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get marketId(): string {
+    let value = this.get("marketId");
+    return value!.toString();
+  }
+
+  set marketId(value: string) {
+    this.set("marketId", Value.fromString(value));
+  }
+
+  get name(): string {
+    let value = this.get("name");
+    return value!.toString();
+  }
+
+  set name(value: string) {
+    this.set("name", Value.fromString(value));
+  }
+
+  get symbol(): string {
+    let value = this.get("symbol");
+    return value!.toString();
+  }
+
+  set symbol(value: string) {
+    this.set("symbol", Value.fromString(value));
+  }
+
+  get decimals(): BigInt {
+    let value = this.get("decimals");
+    return value!.toBigInt();
+  }
+
+  set decimals(value: BigInt) {
+    this.set("decimals", Value.fromBigInt(value));
+  }
+
+  get totalSupply(): BigDecimal {
+    let value = this.get("totalSupply");
+    return value!.toBigDecimal();
+  }
+
+  set totalSupply(value: BigDecimal) {
+    this.set("totalSupply", Value.fromBigDecimal(value));
   }
 }
 

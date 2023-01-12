@@ -29,3 +29,17 @@ export class PoolInstrument extends DataSourceTemplate {
     );
   }
 }
+
+export class ZCBToken extends DataSourceTemplate {
+  static create(address: Address): void {
+    DataSourceTemplate.create("ZCBToken", [address.toHex()]);
+  }
+
+  static createWithContext(address: Address, context: DataSourceContext): void {
+    DataSourceTemplate.createWithContext(
+      "ZCBToken",
+      [address.toHex()],
+      context
+    );
+  }
+}

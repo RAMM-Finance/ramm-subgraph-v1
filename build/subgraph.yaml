@@ -23,6 +23,7 @@ dataSources:
         - VaultFactory
         - BondPool
         - Token
+        - ZCBToken
         - PoolCollateral
       abis:
         - name: Controller
@@ -100,6 +101,7 @@ dataSources:
         - VaultFactory
         - BondPool
         - Token
+        - ZCBToken
         - PoolCollateral
         - Manager
         - ManagerMarketPair
@@ -248,3 +250,46 @@ templates:
         - event: NewCollateralAdded(address,uint256,uint256,uint256,bool)
           handler: handleNewCollateralAdded
       file: templates/PoolInstrument/PoolInstrument.wasm
+  - name: ZCBToken
+    kind: ethereum/contract
+    network: mumbai
+    source:
+      abi: ERC20
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Vault
+        - GeneralInstrument
+        - PoolInstrument
+        - CreditlineInstrument
+        - Token
+        - ZCBToken
+        - Market
+        - BondPool
+      abis:
+        - name: PoolInstrument
+          file: ZCBToken/abis/poolInstrument.json
+        - name: Controller
+          file: ZCBToken/abis/Controller.json
+        - name: MarketManager
+          file: ZCBToken/abis/MarketManager.json
+        - name: Vault
+          file: ZCBToken/abis/Vault.json
+        - name: PoolInstrument
+          file: ZCBToken/abis/poolInstrument.json
+        - name: CreditlineInstrument
+          file: ZCBToken/abis/CreditLine.json
+        - name: Instrument
+          file: ZCBToken/abis/Instrument.json
+        - name: SyntheticZCBPool
+          file: ZCBToken/abis/SyntheticZCBPool.json
+        - name: ERC20
+          file: ZCBToken/abis/ERC20.json
+        - name: ERC721
+          file: ZCBToken/abis/ERC721.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: templates/ZCBToken/ZCBToken.wasm

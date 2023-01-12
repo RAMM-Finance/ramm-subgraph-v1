@@ -12,7 +12,7 @@ import { SyntheticZCBPool as BondPoolContract } from "../../generated/Controller
 
 import {convertToDecimal} from "../utils/index"
 import { BI_18, ZERO_BD, marketManagerContract, ZERO_BI, controllerContract} from "../utils/constants"
-import { Manager, ManagerMarketPair, Market, BondPool, Token, Vault, CreditlineInstrument, PoolInstrument, GeneralInstrument } from "../../generated/schema"
+import { Manager, ManagerMarketPair, Market, BondPool, Token, Vault, CreditlineInstrument, PoolInstrument, GeneralInstrument, ZCBToken } from "../../generated/schema"
 import { BigInt, BigDecimal, Address, store } from '@graphprotocol/graph-ts'
 import { Vault as VaultTemplate} from "../../generated/templates"
 import { MarketApproved, MarketDenied } from "../../generated/Controller/Controller";
@@ -25,6 +25,7 @@ export function handleDeactivatedMarket(event: DeactivatedMarketEvent):void {
         market.alive = false
         market.atLoss = event.params.atLoss
         market.resolved = true
+        market.resolutionTimestamp = event.block.timestamp
         market.save()
     }
 }
@@ -40,31 +41,6 @@ export function handleMarketApproved(event: MarketApproved):void {
 export function handleMarketCollateralUpdate(event: MarketCollateralUpdate): void {
     let market = Market.load(event.params.marketId.toString())
 
-    // if (market) {
-    //     // update bond pool + long and short zcb prices here since bondPool can only be called through market manager.
-    //     let bondPool = BondPool.load(market.bondPool)
-    //     if (bondPool) {
-    //         let bondPoolContract = BondPoolContract.bind(Address.fromString(bondPool.id))
-    //         bondPool.b = convertToDecimal(bondPoolContract.b(), BI_18)
-    //         bondPool.longZCBPrice = convertToDecimal(bondPoolContract.getCurPrice(), BI_18)
-    //         bondPool.discountedReserved = convertToDecimal(bondPoolContract.discountedReserves(), BI_18)
-
-    //         let longZCBContract = ERC20Contract.bind(Address.fromString(bondPool.longZCB))
-    //         let shortZCBContract = ERC20Contract.bind(Address.fromString(bondPool.shortZCB))
-
-    //         let longZCB = Token.load(bondPool.longZCB)
-    //         let shortZCB = Token.load(bondPool.shortZCB)
-
-    //         if (longZCB && shortZCB) {
-    //             longZCB.totalSupply = convertToDecimal(longZCBContract.totalSupply(), BI_18)
-    //             shortZCB.totalSupply = convertToDecimal(shortZCBContract.totalSupply(), BI_18)
-    //             longZCB.save()
-    //             shortZCB.save()
-    //         }
-    //         bondPool.save()
-    //     }
-    // }
-    
     if (market) {
         let vault = Vault.load(market.vault)
         if (vault) {
@@ -76,6 +52,11 @@ export function handleMarketCollateralUpdate(event: MarketCollateralUpdate): voi
             vault.save()
         }
         market.totalCollateral = convertToDecimal(event.params.totalCollateral, BI_18)
+
+        if (market.duringAssessment) {
+            let result = controllerContract.marketCondition(BigInt.fromString(market.id));
+            market.marketCondition = result
+        }
 
         if (market.instrumentType === "POOL") {
             let poolInstrumentId = market.poolInstrument
@@ -125,24 +106,6 @@ export function handleMarketCollateralUpdate(event: MarketCollateralUpdate): voi
               }
             }
           }
-
-        let bondPool = BondPool.load(market.bondPool)
-        if (bondPool) {
-            let shortZCBContract = ERC20Contract.bind(Address.fromString(bondPool.shortZCB))
-            let longZCBContract = ERC20Contract.bind(Address.fromString(bondPool.longZCB))
-
-            let longZCB = Token.load(bondPool.longZCB)
-            if (longZCB)  {
-                longZCB.totalSupply = convertToDecimal(longZCBContract.totalSupply(), BI_18)
-                longZCB.save()
-            }
-
-            let shortZCB = Token.load(bondPool.shortZCB)
-            if (shortZCB) {
-                shortZCB.totalSupply = convertToDecimal(shortZCBContract.totalSupply(), BI_18)
-                shortZCB.save()
-            }
-        }
         
         market.save()
     }
@@ -215,33 +178,6 @@ export function handleTraderCollateralUpdate(event: TraderCollateralUpdate): voi
         managerMarketPair.longZCBCollateral = event.params.isLong ? convertToDecimal(event.params.totalCollateral, BI_18) : ZERO_BD
         managerMarketPair.shortZCBCollateral = !event.params.isLong ? convertToDecimal(event.params.totalCollateral, BI_18) : ZERO_BD
         managerMarketPair.save()
-    }
-
-    let market = Market.load(event.params.marketId.toString())
-
-    if (market) {
-        // update bond pool + long and short zcb prices here since bondPool can only be called through market manager.
-        let bondPool = BondPool.load(market.bondPool)
-        if (bondPool) {
-            let bondPoolContract = BondPoolContract.bind(Address.fromString(bondPool.id))
-            bondPool.b = convertToDecimal(bondPoolContract.b(), BI_18)
-            bondPool.longZCBPrice = convertToDecimal(bondPoolContract.getCurPrice(), BI_18)
-            bondPool.discountedReserved = convertToDecimal(bondPoolContract.discountedReserves(), BI_18)
-
-            let longZCBContract = ERC20Contract.bind(Address.fromString(bondPool.longZCB))
-            let shortZCBContract = ERC20Contract.bind(Address.fromString(bondPool.shortZCB))
-
-            let longZCB = Token.load(bondPool.longZCB)
-            let shortZCB = Token.load(bondPool.shortZCB)
-
-            if (longZCB && shortZCB) {
-                longZCB.totalSupply = convertToDecimal(longZCBContract.totalSupply(), BI_18)
-                shortZCB.totalSupply = convertToDecimal(shortZCBContract.totalSupply(), BI_18)
-                longZCB.save()
-                shortZCB.save()
-            }
-            bondPool.save()
-        }
     }
 }
 

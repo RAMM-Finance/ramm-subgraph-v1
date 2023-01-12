@@ -6,15 +6,18 @@ import { Instrument as GeneralInstrumentContract } from "../../generated/Control
 import { PoolInstrument as PoolInstrumentContract } from "../../generated/Controller/PoolInstrument"
 import { ERC20 as ERC20Contract } from "../../generated/Controller/ERC20"
 import { ERC721 as ERC721Contract } from "../../generated/Controller/ERC721"
+import { SyntheticZCBPool as BondPoolContract } from "../../generated/Controller/SyntheticZCBPool"
 import { InstrumentDeposit, Vault as VaultContract } from "../../generated/Controller/Vault"
 
 
 import { convertToDecimal } from "../utils/index"
-import { BI_18, ZERO_BD, marketManagerContract, ZERO_BI, controllerContract, ADDRESS_ZERO, SECONDS_PER_YEAR, ONE_BD } from "../utils/constants"
-import { GeneralInstrument, BondPool, Market, Token, Vault, MarketManager, CreditlineInstrument, PoolInstrument, PoolCollateral } from "../../generated/schema"
+import { BI_18, ZERO_BD, marketManagerContract, ZERO_BI, controllerContract, ADDRESS_ZERO, SECONDS_PER_YEAR, ONE_BD, MARKET_MANAGER_ADDRESS } from "../utils/constants"
+import { GeneralInstrument, BondPool, Market, Token, Vault, CreditlineInstrument, PoolInstrument, PoolCollateral, ZCBToken } from "../../generated/schema"
 import { BigInt, BigDecimal, Address } from '@graphprotocol/graph-ts'
 import { Vault as VaultTemplate } from "../../generated/templates"
 import { MarketReputationSet } from "../../generated/Controller/MarketManager"
+
+import { ZCBToken as ZCBTokenTemplate} from "../../generated/templates"
 
 import { PoolInstrument as PoolInstrumentTemplate } from "../../generated/templates"
 
@@ -46,12 +49,6 @@ export function handleMarketApproved(event: MarketApprovedEvent): void {
           if (vault && vault.underlying && vault.vaultId) {
             instrument.underlyingBalance =
               convertToDecimal(ERC20Contract.bind(Address.fromString(vault.underlying)).balanceOf(Address.fromString(instrument.id)), BI_18)
-              let result = controllerContract.getVaultSnapShot(vault.vaultId)
-              vault.totalEstimatedAPR = convertToDecimal(result.getTotalEstimatedAPR(), BI_18)
-              vault.goalAPR = convertToDecimal(result.getGoalAPR(), BI_18)
-              vault.totalProtection = convertToDecimal(result.getTotalProtection(), BI_18)
-              vault.exchangeRate = convertToDecimal(result.getExchangeRate(), BI_18)
-              vault.save()
           }
     
           instrument.save()
@@ -101,6 +98,16 @@ export function handleMarketApproved(event: MarketApprovedEvent): void {
         }
       }
     }
+
+    if (vault) {
+      let result = controllerContract.getVaultSnapShot(vault.vaultId)
+      vault.totalEstimatedAPR = convertToDecimal(result.getTotalEstimatedAPR(), BI_18)
+      vault.goalAPR = convertToDecimal(result.getGoalAPR(), BI_18)
+      vault.totalProtection = convertToDecimal(result.getTotalProtection(), BI_18)
+      vault.exchangeRate = convertToDecimal(result.getExchangeRate(), BI_18)
+      vault.save()
+    }
+
     market.save()
   }
 }
@@ -119,12 +126,17 @@ export function handleMarketInitiated(event: MarketInitiatedEvent): void {
     vault.save()
 
     // get tokens
-    let longZCB = new Token(event.params.longZCB.toHexString())
-    let shortZCB = new Token(event.params.shortZCB.toHexString())
+    let longZCB = new ZCBToken(event.params.longZCB.toHexString())
+    let shortZCB = new ZCBToken(event.params.shortZCB.toHexString())
+
+    // add datasources
+    ZCBTokenTemplate.create(event.params.longZCB)
+    ZCBTokenTemplate.create(event.params.shortZCB)
 
     const longContract = ERC20Contract.bind(event.params.longZCB)
     const shortContract = ERC20Contract.bind(event.params.shortZCB)
 
+    longZCB.marketId = market.id
     longZCB.name = longContract.name()
     longZCB.decimals = BI_18
     longZCB.symbol = longContract.symbol()
@@ -132,6 +144,7 @@ export function handleMarketInitiated(event: MarketInitiatedEvent): void {
 
     longZCB.save()
 
+    shortZCB.marketId = market.id
     shortZCB.name = shortContract.name()
     shortZCB.decimals = BI_18
     shortZCB.symbol = shortContract.symbol()
@@ -441,15 +454,6 @@ export function handleMarketDenied(event: MarketDeniedEvent): void {
   }
 }
 
-// export function handleValidatorStakeUpdated(event: ValidatorStakeUpdatedEvent): void {
-//   let market = Market.load(event.params.marketId.toString())
-
-//   if (market) {
-//     market.finalStake = convertToDecimal(event.params.newStake, BI_18)
-//     market.save()
-//   }
-// }
-
 export function handleRedeemTransfer(event: RedeemTransfer): void {
   let market = Market.load(event.params.marketId.toString())
   if (market) {
@@ -462,22 +466,11 @@ export function handleRedeemTransfer(event: RedeemTransfer): void {
       vault.exchangeRate = convertToDecimal(result.getExchangeRate(), BI_18)
       vault.save()
     }
-    let bondPool = BondPool.load(market.bondPool)
 
-    if (bondPool) {
-      let longZCB = Token.load(bondPool.longZCB)
-      let shortZCB = Token.load(bondPool.shortZCB)
-      if (longZCB && shortZCB) {
-        let longZCBContract = ERC20Contract.bind(Address.fromString(longZCB.id))
-        let shortZCBContract = ERC20Contract.bind(Address.fromString(shortZCB.id))
-
-        longZCB.totalSupply = convertToDecimal(longZCBContract.totalSupply(), longZCB.decimals)
-        shortZCB.totalSupply = convertToDecimal(shortZCBContract.totalSupply(), shortZCB.decimals)
-
-        longZCB.save()
-        shortZCB.save()
-      }
-      bondPool.save()
+    if (market.duringAssessment) {
+      let result = controllerContract.marketCondition(BigInt.fromString(market.id));
+      market.marketCondition = result
+      market.save()
     }
   }
 }

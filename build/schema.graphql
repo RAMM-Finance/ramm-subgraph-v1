@@ -1,12 +1,3 @@
-type MarketManager @entity {
-  # address of market manager contract
-  id: ID!
-  # uint256, length of markets array
-  marketCount: BigInt!
-  # address of the owner
-  owner: ID!
-}
-
 enum InstrumentType {
   GENERAL
   CREDITLINE
@@ -276,14 +267,25 @@ type ManagerMarketPair @entity {
 type BondPool @entity {
   # address
   id: ID!
-  longZCB: Token!
-  shortZCB: Token!
+  longZCB: ZCBToken!
+  shortZCB: ZCBToken!
   longZCBPrice: BigDecimal!
   a_initial: BigDecimal!
   b_initial: BigDecimal!
   b: BigDecimal!
   discountCap: BigDecimal!
   discountedReserved: BigDecimal!
+}
+
+type ZCBToken @entity {
+  # address
+  id: ID!
+  # marketId
+  marketId: String!
+  name: String!
+  symbol: String!
+  decimals: BigInt!
+  totalSupply: BigDecimal!
 }
 
 type Token @entity {

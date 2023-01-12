@@ -1,28 +1,28 @@
-import { InstrumentDeposit as InstrumentDepositEvent, InstrumentHarvest, InstrumentRemoved, InstrumentTrusted, InstrumentWithdrawal as InstrumentWithdrawal, Transfer as TransferVaultEvent} from "../../generated/Controller/Vault"
+import { InstrumentDeposit as InstrumentDepositEvent, InstrumentHarvest, InstrumentRemoved, InstrumentTrusted, InstrumentWithdrawal as InstrumentWithdrawal, Transfer as TransferVaultEvent } from "../../generated/Controller/Vault"
 
 import { SyntheticZCBPool as SyntheticZCBPoolContract } from "../../generated/Controller/SyntheticZCBPool"
-import { CreditlineInstrument as CreditlineContract} from "../../generated/Controller/CreditlineInstrument"
-import { Instrument as GeneralInstrumentContract} from "../../generated/Controller/Instrument"
+import { CreditlineInstrument as CreditlineContract } from "../../generated/Controller/CreditlineInstrument"
+import { Instrument as GeneralInstrumentContract } from "../../generated/Controller/Instrument"
 import { Deposit, PoolInstrument as PoolInstrumentContract, Withdraw } from "../../generated/Controller/PoolInstrument"
 import { ERC20 as ERC20Contract } from "../../generated/Controller/ERC20"
 import { ERC721 as ERC721Contract } from "../../generated/Controller/ERC721"
 import { Vault as VaultContract } from "../../generated/Controller/Vault"
 import { dataSource, store } from "@graphprotocol/graph-ts"
 
-import {Address, BigInt} from "@graphprotocol/graph-ts"
+import { Address, BigInt } from "@graphprotocol/graph-ts"
 
-import {convertToDecimal} from "../utils/index"
-import { BI_18, ZERO_BD, marketManagerContract, ZERO_BI, controllerContract} from "../utils/constants"
+import { convertToDecimal } from "../utils/index"
+import { BI_18, ZERO_BD, marketManagerContract, ZERO_BI, controllerContract } from "../utils/constants"
 
-import { Vault, Market, CreditlineInstrument, PoolInstrument, GeneralInstrument, Token} from "../../generated/schema"
+import { Vault, Market, CreditlineInstrument, PoolInstrument, GeneralInstrument, Token } from "../../generated/schema"
 
 let vaultContract = VaultContract.bind(dataSource.address())
 
-export function handleInstrumentDeposit(event: InstrumentDepositEvent):void {
+export function handleInstrumentDeposit(event: InstrumentDepositEvent): void {
     let vault = Vault.load(event.address.toHexString())
 
     let market = Market.load(event.params.marketId.toString())
-    
+
     if (market && vault) {
         vault.exchangeRate = convertToDecimal(vaultContract.previewDeposit(BigInt.fromI32(10).pow(18)), BI_18)
         vault.totalInstrumentHoldings = vault.totalInstrumentHoldings.plus(convertToDecimal(event.params.amount, BI_18))
@@ -40,7 +40,7 @@ export function handleInstrumentDeposit(event: InstrumentDepositEvent):void {
                     instrument.managerStake = convertToDecimal(result.value.getManagerStake(), BI_18)
                     instrument.approvalPrice = convertToDecimal(result.value.getApprovalPrice(), BI_18)
                 }
-    
+
                 instrument.save()
             }
         } else if (market.instrumentType === "Pool") {
@@ -54,7 +54,7 @@ export function handleInstrumentDeposit(event: InstrumentDepositEvent):void {
                     instrument.managerStake = convertToDecimal(result.value.getManagerStake(), BI_18)
                     instrument.approvalPrice = convertToDecimal(result.value.getApprovalPrice(), BI_18)
                 }
-    
+
                 instrument.save()
             }
         } else if (market.instrumentType === "General") {
@@ -72,10 +72,10 @@ export function handleInstrumentDeposit(event: InstrumentDepositEvent):void {
                 instrument.save()
             }
         }
-        
+
         vault.save()
     }
-    
+
     if (vault) {
         let result = controllerContract.getVaultSnapShot(vault.vaultId)
         vault.totalEstimatedAPR = convertToDecimal(result.getTotalEstimatedAPR(), BI_18)
@@ -89,13 +89,13 @@ export function handleInstrumentDeposit(event: InstrumentDepositEvent):void {
 export function handleInstrumentWithdrawal(event: InstrumentWithdrawal): void {
     let vault = Vault.load(event.address.toHexString())
     let market = Market.load(event.params.marketId.toString())
-    
+
     if (market && vault) {
         vault.exchangeRate = convertToDecimal(vaultContract.previewDeposit(BigInt.fromI32(10).pow(18)), BI_18)
         vault.totalInstrumentHoldings = vault.totalInstrumentHoldings.minus(convertToDecimal(event.params.amount, BI_18))
         vault.utilizationRate = convertToDecimal(vaultContract.utilizationRate(), BI_18)
         let underlying = ERC20Contract.bind(Address.fromString(vault.underlying))
-        
+
         if (market.instrumentType == "CREDITLINE") {
             let instrument = CreditlineInstrument.load(event.params.instrument.toHexString())
             if (instrument) {
@@ -136,7 +136,7 @@ export function handleInstrumentWithdrawal(event: InstrumentWithdrawal): void {
                 instrument.save()
             }
         }
-        
+
         vault.save()
     }
 
@@ -204,7 +204,7 @@ export function handleInstrumentTrusted(event: InstrumentTrusted): void {
     }
 
     if (vault) {
-        
+
         vault.save()
     }
 }
@@ -225,31 +225,31 @@ export function handleInstrumentHarvest(event: InstrumentHarvest): void {
     }
     if (instrumentData.instrument_type == 0) {
         let instrument = CreditlineInstrument.load(event.params.instrument.toHexString())
-            if (instrument) {
-                instrument.underlyingBalance = convertToDecimal(event.params.instrument_balance, BI_18)
-                
-                let result = controllerContract.try_getInstrumentSnapShot(BigInt.fromString(instrument.market))
-                if (!result.reverted) {
-                    instrument.exposurePercentage = convertToDecimal(result.value.getExposurePercentage(), BI_18)
-                    instrument.seniorAPR = convertToDecimal(result.value.getSeniorAPR(), BI_18)
-                    instrument.managerStake = convertToDecimal(result.value.getManagerStake(), BI_18)
-                    instrument.approvalPrice = convertToDecimal(result.value.getApprovalPrice(), BI_18)
-                }
-                instrument.save()
+        if (instrument) {
+            instrument.underlyingBalance = convertToDecimal(event.params.instrument_balance, BI_18)
+
+            let result = controllerContract.try_getInstrumentSnapShot(BigInt.fromString(instrument.market))
+            if (!result.reverted) {
+                instrument.exposurePercentage = convertToDecimal(result.value.getExposurePercentage(), BI_18)
+                instrument.seniorAPR = convertToDecimal(result.value.getSeniorAPR(), BI_18)
+                instrument.managerStake = convertToDecimal(result.value.getManagerStake(), BI_18)
+                instrument.approvalPrice = convertToDecimal(result.value.getApprovalPrice(), BI_18)
             }
+            instrument.save()
+        }
     } else if (instrumentData.instrument_type == 2) {
         let instrument = PoolInstrument.load(event.params.instrument.toHexString())
-            if (instrument) {
-                instrument.underlyingBalance = convertToDecimal(event.params.instrument_balance, BI_18)
-                let result = controllerContract.try_getInstrumentSnapShot(BigInt.fromString(instrument.market))
-                if (!result.reverted) {
-                    instrument.exposurePercentage = convertToDecimal(result.value.getExposurePercentage(), BI_18)
-                    instrument.seniorAPR = convertToDecimal(result.value.getSeniorAPR(), BI_18)
-                    instrument.managerStake = convertToDecimal(result.value.getManagerStake(), BI_18)
-                    instrument.approvalPrice = convertToDecimal(result.value.getApprovalPrice(), BI_18)
-                }
-                instrument.save()
+        if (instrument) {
+            instrument.underlyingBalance = convertToDecimal(event.params.instrument_balance, BI_18)
+            let result = controllerContract.try_getInstrumentSnapShot(BigInt.fromString(instrument.market))
+            if (!result.reverted) {
+                instrument.exposurePercentage = convertToDecimal(result.value.getExposurePercentage(), BI_18)
+                instrument.seniorAPR = convertToDecimal(result.value.getSeniorAPR(), BI_18)
+                instrument.managerStake = convertToDecimal(result.value.getManagerStake(), BI_18)
+                instrument.approvalPrice = convertToDecimal(result.value.getApprovalPrice(), BI_18)
             }
+            instrument.save()
+        }
     } else {
         let instrument = GeneralInstrument.load(event.params.instrument.toHexString())
         if (instrument) {
@@ -298,19 +298,18 @@ export function handleInstrumentRemoved(event: InstrumentRemoved): void {
             vault.save()
         }
     }
-    
 }
 
 export function handleTransfer(event: TransferVaultEvent): void {
-    
-    if (event.params.from === dataSource.address() || event.params.to === dataSource.address()) { 
+    if (event.params.from === dataSource.address() || event.params.to === dataSource.address()) {
         let vault = Vault.load(dataSource.address().toHexString())
         if (vault) {
             vault.totalAssets = convertToDecimal(vaultContract.totalAssets(), BI_18);
             vault.totalInstrumentHoldings = convertToDecimal(vaultContract.totalInstrumentHoldings(), BI_18);
             vault.totalSupply = convertToDecimal(vaultContract.totalSupply(), BI_18);
             vault.exchangeRate = convertToDecimal(vaultContract.previewDeposit(BigInt.fromI32(10).pow(18)), BI_18);
-            
+            vault.utilizationRate = convertToDecimal(vaultContract.utilizationRate(), BI_18);
+
             let underlying = Token.load(vault.underlying)
             let underlyingContract = ERC20Contract.bind(Address.fromString(vault.underlying))
             if (underlying) {
@@ -351,7 +350,88 @@ export function handleDeposit(event: Deposit): void {
     if (vault) {
         vault.totalAssets = convertToDecimal(vaultContract.totalAssets(), BI_18)
         vault.totalSupply = convertToDecimal(vaultContract.totalSupply(), BI_18)
+        vault.utilizationRate = convertToDecimal(vaultContract.utilizationRate(), BI_18)
+        let result = controllerContract.getVaultSnapShot(vault.vaultId)
+        vault.totalEstimatedAPR = convertToDecimal(result.getTotalEstimatedAPR(), BI_18)
+        vault.goalAPR = convertToDecimal(result.getGoalAPR(), BI_18)
+        vault.totalProtection = convertToDecimal(result.getTotalProtection(), BI_18)
         vault.save()
+
+        let marketIds = vault.marketIds
+        if (marketIds) {
+            for (let i = 0; i < marketIds.length; i++) {
+                let market = Market.load(marketIds[i])
+                if (market) {
+                    if (market.instrumentType === "POOL") {
+
+                        let poolInstrumentId = market.poolInstrument
+
+                        if (poolInstrumentId !== null) {
+                            let instrument = PoolInstrument.load(poolInstrumentId)
+                            if (instrument) {
+                                let result = controllerContract.try_getInstrumentSnapShot(BigInt.fromString(instrument.market))
+                                if (!result.reverted) {
+                                    instrument.exposurePercentage = convertToDecimal(result.value.getExposurePercentage(), BI_18)
+                                    instrument.seniorAPR = convertToDecimal(result.value.getSeniorAPR(), BI_18)
+                                    instrument.managerStake = convertToDecimal(result.value.getManagerStake(), BI_18)
+                                    instrument.approvalPrice = convertToDecimal(result.value.getApprovalPrice(), BI_18)
+                                }
+
+                                if (vault && vault.underlying) {
+                                    instrument.underlyingBalance =
+                                        convertToDecimal(ERC20Contract.bind(Address.fromString(vault.underlying)).balanceOf(Address.fromString(instrument.id)), BI_18)
+                                }
+                                instrument.save()
+                            }
+                        }
+                    } else if (market.instrumentType === "CREDITLINE") {
+
+                        let creditlineInstrumentId = market.creditlineInstrument
+                        if (creditlineInstrumentId !== null) {
+                            let instrument = CreditlineInstrument.load(creditlineInstrumentId)
+                            if (instrument) {
+                                let result = controllerContract.try_getInstrumentSnapShot(BigInt.fromString(instrument.market))
+                                if (!result.reverted) {
+                                    instrument.exposurePercentage = convertToDecimal(result.value.getExposurePercentage(), BI_18)
+                                    instrument.seniorAPR = convertToDecimal(result.value.getSeniorAPR(), BI_18)
+                                    instrument.managerStake = convertToDecimal(result.value.getManagerStake(), BI_18)
+                                    instrument.approvalPrice = convertToDecimal(result.value.getApprovalPrice(), BI_18)
+                                }
+
+                                if (vault && vault.underlying) {
+                                    instrument.underlyingBalance =
+                                        convertToDecimal(ERC20Contract.bind(Address.fromString(vault.underlying)).balanceOf(Address.fromString(instrument.id)), BI_18)
+                                }
+                                instrument.save()
+                            }
+                        }
+                    } else if (market.instrumentType === "GENERAL") {
+
+                        let generalInstrumentId = market.generalInstrument
+                        if (generalInstrumentId !== null) {
+                            let instrument = GeneralInstrument.load(generalInstrumentId)
+
+                            if (instrument) {
+                                let result = controllerContract.try_getInstrumentSnapShot(BigInt.fromString(instrument.market))
+                                if (!result.reverted) {
+                                    instrument.exposurePercentage = convertToDecimal(result.value.getExposurePercentage(), BI_18)
+                                    instrument.seniorAPR = convertToDecimal(result.value.getSeniorAPR(), BI_18)
+                                    instrument.managerStake = convertToDecimal(result.value.getManagerStake(), BI_18)
+                                    instrument.approvalPrice = convertToDecimal(result.value.getApprovalPrice(), BI_18)
+                                }
+
+                                if (vault && vault.underlying) {
+                                    instrument.underlyingBalance =
+                                        convertToDecimal(ERC20Contract.bind(Address.fromString(vault.underlying)).balanceOf(Address.fromString(instrument.id)), BI_18)
+                                }
+                                instrument.save()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
     }
 }
 
@@ -361,6 +441,84 @@ export function handleWithdraw(event: Withdraw): void {
     if (vault) {
         vault.totalAssets = convertToDecimal(vaultContract.totalAssets(), BI_18)
         vault.totalSupply = convertToDecimal(vaultContract.totalSupply(), BI_18)
+
+        let result = controllerContract.getVaultSnapShot(vault.vaultId)
+        vault.totalEstimatedAPR = convertToDecimal(result.getTotalEstimatedAPR(), BI_18)
+        vault.goalAPR = convertToDecimal(result.getGoalAPR(), BI_18)
+        vault.totalProtection = convertToDecimal(result.getTotalProtection(), BI_18)
         vault.save()
+
+        let marketIds = vault.marketIds
+        if (marketIds) {
+            for (let i = 0; i < marketIds.length; i++) {
+                let market = Market.load(marketIds[i])
+                if (market) {
+                    if (market.instrumentType === "POOL") {
+                        let poolInstrumentId = market.poolInstrument
+
+                        if (poolInstrumentId !== null) {
+                            let instrument = PoolInstrument.load(poolInstrumentId)
+
+                            if (instrument) {
+                                let result = controllerContract.try_getInstrumentSnapShot(BigInt.fromString(instrument.market))
+                                if (!result.reverted) {
+                                    instrument.exposurePercentage = convertToDecimal(result.value.getExposurePercentage(), BI_18)
+                                    instrument.seniorAPR = convertToDecimal(result.value.getSeniorAPR(), BI_18)
+                                    instrument.managerStake = convertToDecimal(result.value.getManagerStake(), BI_18)
+                                    instrument.approvalPrice = convertToDecimal(result.value.getApprovalPrice(), BI_18)
+                                }
+
+                                if (vault && vault.underlying) {
+                                    instrument.underlyingBalance =
+                                        convertToDecimal(ERC20Contract.bind(Address.fromString(vault.underlying)).balanceOf(Address.fromString(instrument.id)), BI_18)
+                                }
+                                instrument.save()
+                            }
+                        }
+                    } else if (market.instrumentType === "CREDITLINE") {
+                        let creditlineInstrumentId = market.creditlineInstrument
+                        if (creditlineInstrumentId !== null) {
+                            let instrument = CreditlineInstrument.load(creditlineInstrumentId)
+                            if (instrument) {
+                                let result = controllerContract.try_getInstrumentSnapShot(BigInt.fromString(instrument.market))
+                                if (!result.reverted) {
+                                    instrument.exposurePercentage = convertToDecimal(result.value.getExposurePercentage(), BI_18)
+                                    instrument.seniorAPR = convertToDecimal(result.value.getSeniorAPR(), BI_18)
+                                    instrument.managerStake = convertToDecimal(result.value.getManagerStake(), BI_18)
+                                    instrument.approvalPrice = convertToDecimal(result.value.getApprovalPrice(), BI_18)
+                                }
+
+                                if (vault && vault.underlying) {
+                                    instrument.underlyingBalance =
+                                        convertToDecimal(ERC20Contract.bind(Address.fromString(vault.underlying)).balanceOf(Address.fromString(instrument.id)), BI_18)
+                                }
+                                instrument.save()
+                            }
+                        }
+                    } else if (market.instrumentType === "GENERAL") {
+                        let generalInstrumentId = market.generalInstrument
+                        if (generalInstrumentId !== null) {
+                            let instrument = GeneralInstrument.load(generalInstrumentId)
+
+                            if (instrument) {
+                                let result = controllerContract.try_getInstrumentSnapShot(BigInt.fromString(instrument.market))
+                                if (!result.reverted) {
+                                    instrument.exposurePercentage = convertToDecimal(result.value.getExposurePercentage(), BI_18)
+                                    instrument.seniorAPR = convertToDecimal(result.value.getSeniorAPR(), BI_18)
+                                    instrument.managerStake = convertToDecimal(result.value.getManagerStake(), BI_18)
+                                    instrument.approvalPrice = convertToDecimal(result.value.getApprovalPrice(), BI_18)
+                                }
+
+                                if (vault && vault.underlying) {
+                                    instrument.underlyingBalance =
+                                        convertToDecimal(ERC20Contract.bind(Address.fromString(vault.underlying)).balanceOf(Address.fromString(instrument.id)), BI_18)
+                                }
+                                instrument.save()
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
