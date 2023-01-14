@@ -32,7 +32,7 @@ export function handleMarketApproved(event: MarketApprovedEvent): void {
     market.approvedPrincipal = convertToDecimal(event.params.data.approved_principal, BI_18)
     market.approvedYield = convertToDecimal(event.params.data.approved_yield, BI_18)
 
-    if (market.instrumentType === "POOL") {
+    if (market.instrumentType == BigInt.fromI32(2)) {
       let poolInstrumentId = market.poolInstrument
 
       if (poolInstrumentId!== null) {
@@ -49,12 +49,12 @@ export function handleMarketApproved(event: MarketApprovedEvent): void {
           if (vault && vault.underlying && vault.vaultId) {
             instrument.underlyingBalance =
               convertToDecimal(ERC20Contract.bind(Address.fromString(vault.underlying)).balanceOf(Address.fromString(instrument.id)), BI_18)
-          }
+            }
     
           instrument.save()
         }
       }
-    } else if (market.instrumentType === "CREDITLINE") {
+    } else if (market.instrumentType === BigInt.fromI32(0)) {
       let creditlineInstrumentId = market.creditlineInstrument
       if (creditlineInstrumentId !== null) {
         let instrument = CreditlineInstrument.load(creditlineInstrumentId)
@@ -75,7 +75,7 @@ export function handleMarketApproved(event: MarketApprovedEvent): void {
           instrument.save()
         }
       }
-    } else if (market.instrumentType === "GENERAL") {
+    } else {
       let generalInstrumentId = market.generalInstrument
       if (generalInstrumentId !== null) {
         let instrument = GeneralInstrument.load(generalInstrumentId)
@@ -199,10 +199,10 @@ export function handleMarketInitiated(event: MarketInitiatedEvent): void {
     market.approvedYield = ZERO_BD
 
     const instrumentData = event.params.instrumentData;
+    market.instrumentType = BigInt.fromI32(instrumentData.instrument_type)
 
 
     if (instrumentData.instrument_type === 0) {
-      market.instrumentType = "CREDITLINE"
 
       // creditline instrument created
       let instrument = new CreditlineInstrument(instrumentData.instrument_address.toHexString())
@@ -226,9 +226,9 @@ export function handleMarketInitiated(event: MarketInitiatedEvent): void {
 
       let collateralType = CreditlineContract.bind(instrumentData.instrument_address).try_collateral_type();
       if (!collateralType.reverted) {
-        instrument.collateralType = BigInt.fromI32(3)
+        instrument.collateralType = BigInt.fromI32(collateralType.value)   
       } else {
-        instrument.collateralType = BigInt.fromI32(collateralType.value)
+        instrument.collateralType = BigInt.fromI32(3)
       }
 
       instrument.save()
@@ -236,7 +236,6 @@ export function handleMarketInitiated(event: MarketInitiatedEvent): void {
       market.creditlineInstrument = instrument.id
 
     } else if (instrumentData.instrument_type === 2) {
-      market.instrumentType = "POOL"
 
       // new data source added
       PoolInstrumentTemplate.create(event.params.instrumentData.instrument_address)
@@ -317,8 +316,74 @@ export function handleMarketInitiated(event: MarketInitiatedEvent): void {
 
       market.poolInstrument = instrument.id
 
-    } else {
-      market.instrumentType = "GENERAL"
+    } else if (instrumentData.instrument_type === 1) {
+      let instrument = new GeneralInstrument(instrumentData.instrument_address.toHexString())
+      let instrumentContract = GeneralInstrumentContract.bind(instrumentData.instrument_address)
+
+      let underlyingContract = ERC20Contract.bind(Address.fromString(vault.underlying))
+
+      instrument.market = market.id
+      instrument.vault = event.params.vault.toHexString()
+      instrument.utilizer = event.params.recipient.toHexString()
+      instrument.name = instrumentData.name.toString()
+      instrument.exposurePercentage = ZERO_BD
+      instrument.managerStake = ZERO_BD
+      instrument.approvalPrice = ZERO_BD
+      instrument.underlyingBalance = convertToDecimal(underlyingContract.balanceOf(instrumentData.instrument_address), BI_18)
+      instrument.seniorAPR = ZERO_BD
+      instrument.principal = convertToDecimal(instrumentData.principal, BI_18)
+      instrument.expectedYield = convertToDecimal(instrumentData.expectedYield, BI_18)
+      instrument.duration = instrumentData.duration
+      instrument.description = instrumentData.description
+      instrument.save()
+
+      market.generalInstrument = instrument.id
+    } else if (instrumentData.instrument_type === 3) {
+      let instrument = new GeneralInstrument(instrumentData.instrument_address.toHexString())
+      let instrumentContract = GeneralInstrumentContract.bind(instrumentData.instrument_address)
+
+      let underlyingContract = ERC20Contract.bind(Address.fromString(vault.underlying))
+
+      instrument.market = market.id
+      instrument.vault = event.params.vault.toHexString()
+      instrument.utilizer = event.params.recipient.toHexString()
+      instrument.name = instrumentData.name.toString()
+      instrument.exposurePercentage = ZERO_BD
+      instrument.managerStake = ZERO_BD
+      instrument.approvalPrice = ZERO_BD
+      instrument.underlyingBalance = convertToDecimal(underlyingContract.balanceOf(instrumentData.instrument_address), BI_18)
+      instrument.seniorAPR = ZERO_BD
+      instrument.principal = convertToDecimal(instrumentData.principal, BI_18)
+      instrument.expectedYield = convertToDecimal(instrumentData.expectedYield, BI_18)
+      instrument.duration = instrumentData.duration
+      instrument.description = instrumentData.description
+      instrument.save()
+
+      market.generalInstrument = instrument.id
+    } else if (instrumentData.instrument_type === 4) {
+      let instrument = new GeneralInstrument(instrumentData.instrument_address.toHexString())
+      let instrumentContract = GeneralInstrumentContract.bind(instrumentData.instrument_address)
+
+      let underlyingContract = ERC20Contract.bind(Address.fromString(vault.underlying))
+
+      instrument.market = market.id
+      instrument.vault = event.params.vault.toHexString()
+      instrument.utilizer = event.params.recipient.toHexString()
+      instrument.name = instrumentData.name.toString()
+      instrument.exposurePercentage = ZERO_BD
+      instrument.managerStake = ZERO_BD
+      instrument.approvalPrice = ZERO_BD
+      instrument.underlyingBalance = convertToDecimal(underlyingContract.balanceOf(instrumentData.instrument_address), BI_18)
+      instrument.seniorAPR = ZERO_BD
+      instrument.principal = convertToDecimal(instrumentData.principal, BI_18)
+      instrument.expectedYield = convertToDecimal(instrumentData.expectedYield, BI_18)
+      instrument.duration = instrumentData.duration
+      instrument.description = instrumentData.description
+      instrument.save()
+
+      market.generalInstrument = instrument.id
+    }
+    else {
 
       let instrument = new GeneralInstrument(instrumentData.instrument_address.toHexString())
       let instrumentContract = GeneralInstrumentContract.bind(instrumentData.instrument_address)
@@ -338,6 +403,7 @@ export function handleMarketInitiated(event: MarketInitiatedEvent): void {
       instrument.expectedYield = convertToDecimal(instrumentData.expectedYield, BI_18)
       instrument.duration = instrumentData.duration
       instrument.description = instrumentData.description
+      instrument.save()
 
       market.generalInstrument = instrument.id
     }

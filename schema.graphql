@@ -1,10 +1,3 @@
-enum InstrumentType {
-  GENERAL
-  CREDITLINE
-  OPTIONS
-  POOL
-}
-
 type Market @entity {
   # marketId
   id: ID!
@@ -51,7 +44,7 @@ type Market @entity {
   approvedYield: BigDecimal
 
   # instrument type
-  instrumentType: InstrumentType!
+  instrumentType: BigInt!
 
   # non-null based on instrument type
   creditlineInstrument: CreditlineInstrument

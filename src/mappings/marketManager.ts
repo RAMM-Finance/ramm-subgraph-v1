@@ -58,7 +58,7 @@ export function handleMarketCollateralUpdate(event: MarketCollateralUpdate): voi
             market.marketCondition = result
         }
 
-        if (market.instrumentType === "POOL") {
+        if (market.instrumentType == BigInt.fromI32(2)) {
             let poolInstrumentId = market.poolInstrument
       
             if (poolInstrumentId!== null) {
@@ -78,7 +78,7 @@ export function handleMarketCollateralUpdate(event: MarketCollateralUpdate): voi
                 instrument.save()
               }
             }
-          } else if (market.instrumentType === "CREDITLINE") {
+          } else if (market.instrumentType == BigInt.fromI32(0)) {
             let creditlineInstrumentId = market.creditlineInstrument
             if (creditlineInstrumentId !== null) {
               let instrument = CreditlineInstrument.load(creditlineInstrumentId)
@@ -91,7 +91,7 @@ export function handleMarketCollateralUpdate(event: MarketCollateralUpdate): voi
                 instrument.save()
               }
             }
-          } else if (market.instrumentType === "GENERAL") {
+          } else {
             let generalInstrumentId = market.generalInstrument
             if (generalInstrumentId !== null) {
               let instrument = GeneralInstrument.load(generalInstrumentId)

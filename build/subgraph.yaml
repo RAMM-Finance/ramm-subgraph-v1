@@ -6,9 +6,9 @@ dataSources:
     name: Controller
     network: mumbai
     source:
-      address: "0x292f3b655c8028b5A66FcA3a95196442847d0727"
+      address: "0x612a8dAaA8dc7cdC8036f6954C0471Be9CEd5766"
       abi: Controller
-      startBlock: 30808854
+      startBlock: 30957353
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -64,9 +64,9 @@ dataSources:
     name: ReputationManager
     network: mumbai
     source:
-      address: "0xAbD15EC82276AF0bb09a773a3aE5392c2C110C72"
+      address: "0x16718160DBe4a511eC40E47B9F188c7902599097"
       abi: ReputationManager
-      startBlock: 30808867
+      startBlock: 30957367
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -84,9 +84,9 @@ dataSources:
     name: MarketManager
     network: mumbai
     source:
-      address: "0xAA3b8bd9704973Fe955255d513447DCD2BA63b62"
+      address: "0x63525b0f7bDDae2366267517cFAFdeAe151eA2d6"
       abi: MarketManager
-      startBlock: 30808857
+      startBlock: 30957356
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7

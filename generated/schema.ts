@@ -325,13 +325,13 @@ export class Market extends Entity {
     }
   }
 
-  get instrumentType(): string {
+  get instrumentType(): BigInt {
     let value = this.get("instrumentType");
-    return value!.toString();
+    return value!.toBigInt();
   }
 
-  set instrumentType(value: string) {
-    this.set("instrumentType", Value.fromString(value));
+  set instrumentType(value: BigInt) {
+    this.set("instrumentType", Value.fromBigInt(value));
   }
 
   get creditlineInstrument(): string | null {

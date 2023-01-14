@@ -27,9 +27,10 @@ export function handleInstrumentDeposit(event: InstrumentDepositEvent): void {
         vault.exchangeRate = convertToDecimal(vaultContract.previewDeposit(BigInt.fromI32(10).pow(18)), BI_18)
         vault.totalInstrumentHoldings = vault.totalInstrumentHoldings.plus(convertToDecimal(event.params.amount, BI_18))
         vault.utilizationRate = convertToDecimal(vaultContract.utilizationRate(), BI_18)
+        vault.save()
         let underlying = ERC20Contract.bind(Address.fromString(vault.underlying))
 
-        if (market.instrumentType === "Creditline") {
+        if (market.instrumentType == BigInt.fromI32(0)) {
             let instrument = CreditlineInstrument.load(event.params.instrument.toHexString())
             if (instrument) {
                 instrument.underlyingBalance = convertToDecimal(underlying.balanceOf(Address.fromString(instrument.id)), BI_18)
@@ -43,7 +44,7 @@ export function handleInstrumentDeposit(event: InstrumentDepositEvent): void {
 
                 instrument.save()
             }
-        } else if (market.instrumentType === "Pool") {
+        } else if (market.instrumentType == BigInt.fromI32(2)) {
             let instrument = PoolInstrument.load(event.params.instrument.toHexString())
             if (instrument) {
                 instrument.underlyingBalance = convertToDecimal(underlying.balanceOf(Address.fromString(instrument.id)), BI_18)
@@ -57,7 +58,7 @@ export function handleInstrumentDeposit(event: InstrumentDepositEvent): void {
 
                 instrument.save()
             }
-        } else if (market.instrumentType === "General") {
+        } else {
             let instrument = GeneralInstrument.load(event.params.instrument.toHexString())
             if (instrument) {
                 instrument.underlyingBalance = convertToDecimal(underlying.balanceOf(Address.fromString(instrument.id)), BI_18)
@@ -72,8 +73,6 @@ export function handleInstrumentDeposit(event: InstrumentDepositEvent): void {
                 instrument.save()
             }
         }
-
-        vault.save()
     }
 
     if (vault) {
@@ -96,7 +95,7 @@ export function handleInstrumentWithdrawal(event: InstrumentWithdrawal): void {
         vault.utilizationRate = convertToDecimal(vaultContract.utilizationRate(), BI_18)
         let underlying = ERC20Contract.bind(Address.fromString(vault.underlying))
 
-        if (market.instrumentType == "CREDITLINE") {
+        if (market.instrumentType == BigInt.fromI32(0)) {
             let instrument = CreditlineInstrument.load(event.params.instrument.toHexString())
             if (instrument) {
                 instrument.underlyingBalance = convertToDecimal(underlying.balanceOf(Address.fromString(instrument.id)), BI_18)
@@ -109,7 +108,7 @@ export function handleInstrumentWithdrawal(event: InstrumentWithdrawal): void {
                 }
                 instrument.save()
             }
-        } else if (market.instrumentType == "POOL") {
+        } else if (market.instrumentType == BigInt.fromI32(2)) {
             let instrument = PoolInstrument.load(event.params.instrument.toHexString())
             if (instrument) {
                 instrument.underlyingBalance = convertToDecimal(underlying.balanceOf(Address.fromString(instrument.id)), BI_18)
@@ -122,7 +121,7 @@ export function handleInstrumentWithdrawal(event: InstrumentWithdrawal): void {
                 }
                 instrument.save()
             }
-        } else if (market.instrumentType == "GENERAL") {
+        } else {
             let instrument = GeneralInstrument.load(event.params.instrument.toHexString())
             if (instrument) {
                 instrument.underlyingBalance = convertToDecimal(underlying.balanceOf(Address.fromString(instrument.id)), BI_18)
@@ -168,7 +167,7 @@ export function handleInstrumentTrusted(event: InstrumentTrusted): void {
     let market = Market.load(event.params.marketId.toString())
 
     if (market && vault) {
-        if (market.instrumentType === "CREDITLINE") {
+        if (market.instrumentType == BigInt.fromI32(0)) {
             let creditline = CreditlineInstrument.load(event.params.instrument.toHexString())
             if (creditline) {
                 creditline.principal = convertToDecimal(event.params.principal, BI_18)
@@ -185,7 +184,18 @@ export function handleInstrumentTrusted(event: InstrumentTrusted): void {
 
                 creditline.save()
             }
-        } else if (market.instrumentType === "GENERAL") {
+
+        // IF NOT POOL INSTRUMENT
+        } else if (market.instrumentType == BigInt.fromI32(2)) {
+            let poolInstrument = PoolInstrument.load(event.params.instrument.toHexString())
+            if (poolInstrument) {
+                let vaultContract = VaultContract.bind(dataSource.address())
+
+                let instrumentData = vaultContract.getInstrumentData(Address.fromString(poolInstrument.id))
+                poolInstrument.inceptionTime = instrumentData.poolData.inceptionTime;
+                poolInstrument.save()
+            }
+        } else {
             let generalInstrument = GeneralInstrument.load(event.params.instrument.toHexString())
             if (generalInstrument) {
                 generalInstrument.principal = convertToDecimal(event.params.principal, BI_18)
@@ -202,11 +212,6 @@ export function handleInstrumentTrusted(event: InstrumentTrusted): void {
             }
         }
     }
-
-    if (vault) {
-
-        vault.save()
-    }
 }
 
 export function handleInstrumentHarvest(event: InstrumentHarvest): void {
@@ -220,7 +225,6 @@ export function handleInstrumentHarvest(event: InstrumentHarvest): void {
         vault.goalAPR = convertToDecimal(result.getGoalAPR(), BI_18)
         vault.totalProtection = convertToDecimal(result.getTotalProtection(), BI_18)
         vault.exchangeRate = convertToDecimal(result.getExchangeRate(), BI_18)
-        vault.save()
         vault.save()
     }
     if (instrumentData.instrument_type == 0) {
@@ -271,19 +275,19 @@ export function handleInstrumentRemoved(event: InstrumentRemoved): void {
     let market = Market.load(event.params.marketId.toString())
     if (market) {
         // based on the market.instrumetType, we can remove the instrument from the correct entity
-        if (market.instrumentType === "CREDITLINE") {
+        if (market.instrumentType == BigInt.fromI32(0)) {
             let creditline = CreditlineInstrument.load(event.params.instrumentAddress.toHexString())
             if (creditline && market.creditlineInstrument) {
                 store.remove("CreditlineInstrument", creditline.id)
                 market.creditlineInstrument = null
             }
-        } else if (market.instrumentType === "POOL") {
+        } else if (market.instrumentType == BigInt.fromI32(2)) {
             let pool = PoolInstrument.load(event.params.instrumentAddress.toHexString())
             if (pool && market.poolInstrument) {
                 store.remove("PoolInstrument", pool.id)
                 market.poolInstrument = null
             }
-        } else if (market.instrumentType === "GENERAL") {
+        } else {
             let general = GeneralInstrument.load(event.params.instrumentAddress.toHexString())
             if (general && market.generalInstrument) {
                 store.remove("GeneralInstrument", general.id)
@@ -362,7 +366,7 @@ export function handleDeposit(event: Deposit): void {
             for (let i = 0; i < marketIds.length; i++) {
                 let market = Market.load(marketIds[i])
                 if (market) {
-                    if (market.instrumentType === "POOL") {
+                    if (market.instrumentType == BigInt.fromI32(2)) {
 
                         let poolInstrumentId = market.poolInstrument
 
@@ -384,7 +388,7 @@ export function handleDeposit(event: Deposit): void {
                                 instrument.save()
                             }
                         }
-                    } else if (market.instrumentType === "CREDITLINE") {
+                    } else if (market.instrumentType == BigInt.fromI32(0)) {
 
                         let creditlineInstrumentId = market.creditlineInstrument
                         if (creditlineInstrumentId !== null) {
@@ -405,7 +409,7 @@ export function handleDeposit(event: Deposit): void {
                                 instrument.save()
                             }
                         }
-                    } else if (market.instrumentType === "GENERAL") {
+                    } else {
 
                         let generalInstrumentId = market.generalInstrument
                         if (generalInstrumentId !== null) {
@@ -453,7 +457,7 @@ export function handleWithdraw(event: Withdraw): void {
             for (let i = 0; i < marketIds.length; i++) {
                 let market = Market.load(marketIds[i])
                 if (market) {
-                    if (market.instrumentType === "POOL") {
+                    if (market.instrumentType == BigInt.fromI32(2)) {
                         let poolInstrumentId = market.poolInstrument
 
                         if (poolInstrumentId !== null) {
@@ -475,7 +479,7 @@ export function handleWithdraw(event: Withdraw): void {
                                 instrument.save()
                             }
                         }
-                    } else if (market.instrumentType === "CREDITLINE") {
+                    } else if (market.instrumentType == BigInt.fromI32(0)) {
                         let creditlineInstrumentId = market.creditlineInstrument
                         if (creditlineInstrumentId !== null) {
                             let instrument = CreditlineInstrument.load(creditlineInstrumentId)
@@ -495,7 +499,7 @@ export function handleWithdraw(event: Withdraw): void {
                                 instrument.save()
                             }
                         }
-                    } else if (market.instrumentType === "GENERAL") {
+                    } else {
                         let generalInstrumentId = market.generalInstrument
                         if (generalInstrumentId !== null) {
                             let instrument = GeneralInstrument.load(generalInstrumentId)
