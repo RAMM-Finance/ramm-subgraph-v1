@@ -1,5 +1,7 @@
 /* eslint-disable prefer-const */
-import { BigInt, BigDecimal, ethereum } from '@graphprotocol/graph-ts'
+import { BigInt, BigDecimal, ethereum, Address } from '@graphprotocol/graph-ts'
+import { ERC20 } from '../../generated/Controller/ERC20'
+import { ERC721 } from '../../generated/Controller/ERC721'
 import { ONE_BI, ZERO_BI, ZERO_BD, ONE_BD } from '../utils/constants'
 
 export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
@@ -80,4 +82,53 @@ export function convertTokenToDecimal(tokenAmount: BigInt, exchangeDecimals: Big
     return tokenAmount.toBigDecimal()
   }
   return tokenAmount.toBigDecimal().div(exponentToBigDecimal(exchangeDecimals))
+}
+
+
+export function fetchTokenSymbol(tokenAddress: Address, isERC20: boolean): string {
+  let contract = isERC20 ? ERC20.bind(tokenAddress) : ERC721.bind(tokenAddress)
+
+  // try types string and bytes32 for symbol
+  let symbolValue = 'unknown'
+  let symbolResult = contract.try_symbol()
+  if (!symbolResult.reverted) {
+    symbolValue = symbolResult.value
+  }
+
+  return symbolValue
+}
+
+export function fetchTokenName(tokenAddress: Address, isERC20: boolean): string {
+  let contract = isERC20 ? ERC20.bind(tokenAddress) : ERC721.bind(tokenAddress)
+
+  // try types string and bytes32 for name
+  let nameValue = 'unknown'
+  let nameResult = contract.try_name()
+  if (nameResult.reverted) {
+    nameValue = nameResult.value
+  }
+
+  return nameValue
+}
+
+export function fetchTokenTotalSupply(tokenAddress: Address): BigInt | null {
+  let contract = ERC20.bind(tokenAddress)
+  let totalSupplyValue = null
+  let totalSupplyResult = contract.try_totalSupply()
+  if (!totalSupplyResult.reverted) {
+    totalSupplyValue = totalSupplyResult.value
+  }
+  return totalSupplyValue
+}
+
+export function fetchTokenDecimals(tokenAddress: Address): BigInt {
+  let contract = ERC20.bind(tokenAddress)
+  // try types uint8 for decimals
+  let decimalValue = null
+  let decimalResult = contract.try_decimals()
+  if (!decimalResult.reverted) {
+    decimalValue = decimalResult.value
+  }
+
+  return BigInt.fromI32(decimalValue as i32)
 }

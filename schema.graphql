@@ -30,7 +30,6 @@ type Market @entity {
   r: BigDecimal!
   s: BigDecimal!
   steak: BigDecimal!
-  
 
   # redemption price set when market is resolved, may be null.
   redemptionPrice: BigDecimal!
@@ -123,6 +122,8 @@ type Vault @entity {
   id: ID!
   vaultId: BigInt!
   
+  description: String!
+  
   # ERC4626
   name: String!
   symbol: String!
@@ -133,8 +134,7 @@ type Vault @entity {
   # total number of shares
   totalSupply: BigDecimal!
   # total number of instrument holdings
-  totalInstrumentHoldings: BigDecimal!
-  
+  totalInstrumentHoldings: BigDecimal!  
   
   onlyVerified: Boolean!
   rVault: BigDecimal!
@@ -220,6 +220,34 @@ type PoolCollateral @entity {
   owner: String!
 }
 
+type OptionsInstrument implements BaseInstrument @entity {
+  # instrument address
+  id: ID!
+  name: String!
+  market: Market!
+  vault: Vault!
+  # address of the utilizer
+  utilizer: String!
+  # maybe a better way to do this?
+  underlyingBalance: BigDecimal!
+  seniorAPR: BigDecimal! 
+  exposurePercentage: BigDecimal!
+  managerStake: BigDecimal! 
+  approvalPrice: BigDecimal!
+  principal: BigDecimal!
+  expectedYield: BigDecimal!
+  duration: BigInt!
+  description: String!
+
+  # instrument specific
+  strikePrice: BigDecimal!
+  pricePerContract: BigDecimal!
+  shortCollateral: BigDecimal!
+  longCollateral: BigDecimal!
+  maturityTime: BigInt!
+  tradeTime: BigInt!
+  oracle: String!
+}
 type CreditlineInstrument implements BaseInstrument @entity {
   # Base Instrument fields
   # instrument address

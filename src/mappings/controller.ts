@@ -152,7 +152,6 @@ export function handleMarketInitiated(event: MarketInitiatedEvent): void {
 
     shortZCB.save()
 
-
     let bondPool = new BondPool(event.params.pool.toHexString())
     const bondPoolContract = SyntheticZCBPoolContract.bind(event.params.pool)
 
@@ -293,6 +292,9 @@ export function handleMarketInitiated(event: MarketInitiatedEvent): void {
         collateral.maxAmount = convertToDecimal(collateralData.getMaxAmount(), BI_18)
         collateral.isERC20 = collateralData.getIsERC20()
         collateral.totalSupplied = convertToDecimal(collateralData.getTotalCollateral(), BI_18)
+        // collateral.owner = ADDRESS_ZERO
+        // collateral.name = "unknown"
+        // collateral.symbol = "unknown"
 
         if (collateral.isERC20) {
           // create ERC20Contract from collateral address
@@ -466,6 +468,7 @@ export function handleVaultCreated(event: VaultCreatedEvent): void {
   vault.totalAssets = convertToDecimal(vaultContract.totalAssets(), BI_18)
   vault.totalSupply = convertToDecimal(vaultContract.totalSupply(), BI_18)
   vault.decimals = BI_18
+  vault.description = vaultContract.description()
 
 
   const defaultMarketParameters = event.params.defaultParams

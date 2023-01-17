@@ -123,6 +123,8 @@ type Vault @entity {
   id: ID!
   vaultId: BigInt!
   
+  description: String!
+  
   # ERC4626
   name: String!
   symbol: String!
@@ -133,8 +135,7 @@ type Vault @entity {
   # total number of shares
   totalSupply: BigDecimal!
   # total number of instrument holdings
-  totalInstrumentHoldings: BigDecimal!
-  
+  totalInstrumentHoldings: BigDecimal!  
   
   onlyVerified: Boolean!
   rVault: BigDecimal!

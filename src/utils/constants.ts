@@ -4,8 +4,8 @@ import { MarketManager as MarketManagerContract } from '../../generated/Controll
 import { Controller as ControllerContract } from "../../generated/Controller/Controller"
 
 export const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000'
-export const MARKET_MANAGER_ADDRESS = '0x63525b0f7bDDae2366267517cFAFdeAe151eA2d6'
-export const CONTROLLER_ADDRESS = '0x612a8dAaA8dc7cdC8036f6954C0471Be9CEd5766'
+export const MARKET_MANAGER_ADDRESS = '0x19B491ff3AD8D4488F495f659E2c6723F7B1D82b'
+export const CONTROLLER_ADDRESS = '0x897eAA806d9fbd9315a5Bdc2a6C0AD3e15b5D6A0'
 
 export let ZERO_BI = BigInt.fromI32(0)
 export let ONE_BI = BigInt.fromI32(1)

@@ -775,6 +775,15 @@ export class Vault extends Entity {
     this.set("vaultId", Value.fromBigInt(value));
   }
 
+  get description(): string {
+    let value = this.get("description");
+    return value!.toString();
+  }
+
+  set description(value: string) {
+    this.set("description", Value.fromString(value));
+  }
+
   get name(): string {
     let value = this.get("name");
     return value!.toString();
